@@ -32,7 +32,7 @@ function allowed(u) {
   return u.protocol === "https:" && ALLOWED_HOSTS.indexOf(u.hostname) !== -1;
 }
 
-export async function resolve(startUrl, fetchImpl) {
+async function resolve(startUrl, fetchImpl) {
   let current = new URL(startUrl);
   for (let hop = 0; hop < MAX_HOPS; hop++) {
     if (!allowed(current)) throw new Error("Host not allowed: " + current.hostname);
