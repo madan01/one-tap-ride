@@ -26,13 +26,50 @@
     return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  // Accepts "12.9784, 77.6408" (or similar) and returns {lat,lng} or null if invalid.
-  function parseLatLng(value) {
-    var parts = String(value || "").split(",").map(function (s) { return parseFloat(s.trim()); });
-    if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
-    var lat = parts[0], lng = parts[1];
+  function validLatLng(lat, lng) {
+    if (isNaN(lat) || isNaN(lng)) return null;
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
     return { lat: lat, lng: lng };
+  }
+
+  // Accepts either "12.9784, 77.6408" or a full Google Maps URL and returns
+  // {lat, lng, name} (name only when the URL carries one) or null if nothing usable found.
+  function parseLocation(value) {
+    var text = String(value || "").trim();
+    if (!text) return null;
+
+    var plain = text.split(",").map(function (s) { return parseFloat(s.trim()); });
+    if (plain.length === 2 && /^[-+\d.\s,]+$/.test(text)) {
+      var p = validLatLng(plain[0], plain[1]);
+      return p ? { lat: p.lat, lng: p.lng, name: "" } : null;
+    }
+
+    var decoded = text;
+    try { decoded = decodeURIComponent(text); } catch (e) { /* keep raw */ }
+    var num = "(-?\\d+(?:\\.\\d+)?)";
+    // Most exact first: the pinned place (!3d..!4d..), then explicit query params, then map centre (@lat,lng).
+    var patterns = [
+      new RegExp("!3d" + num + "!4d" + num),
+      new RegExp("[?&](?:q|ll|query|destination|daddr|saddr)=" + num + ",\\s*" + num),
+      new RegExp("@" + num + ",\\s*" + num)
+    ];
+    for (var i = 0; i < patterns.length; i++) {
+      var m = decoded.match(patterns[i]);
+      if (m) {
+        var pt = validLatLng(parseFloat(m[1]), parseFloat(m[2]));
+        if (pt) {
+          var nm = decoded.match(/\/maps\/place\/([^\/@?]+)/);
+          var name = nm ? nm[1].replace(/\+/g, " ").split(",")[0].trim() : "";
+          return { lat: pt.lat, lng: pt.lng, name: name };
+        }
+      }
+    }
+    return null;
+  }
+
+  function parseLatLng(value) {
+    var loc = parseLocation(value);
+    return loc ? { lat: loc.lat, lng: loc.lng } : null;
   }
 
   function migrateLegacyTrip() {
@@ -121,6 +158,7 @@
     rideTypeMeta: rideTypeMeta,
     uid: uid,
     parseLatLng: parseLatLng,
+    parseLocation: parseLocation,
     loadRides: loadRides,
     saveRides: saveRides,
     loadFamilyPhone: loadFamilyPhone,
