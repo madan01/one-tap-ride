@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>One-Tap Ride</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -9,6 +14,9 @@
 <meta name="apple-mobile-web-app-title" content="One-Tap Ride">
 <style>
   :root{
+    color-scheme: light dark;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     --bg: #F5F3EE;
     --surface: #FFFFFF;
     --surface-sunken: #ECE9E1;
@@ -54,7 +62,9 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
+  html, body { min-height: 100%; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
   body{
     margin: 0;
     background: var(--bg);
@@ -63,6 +73,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     padding-inline: 20px;
     padding-block: 28px;
   }
@@ -73,7 +84,6 @@
     display: flex;
     flex-direction: column;
     gap: 22px;
-    flex: 1;
   }
 
   .masthead{
@@ -232,8 +242,6 @@
     font-size: 0.85rem;
     color: var(--ink-faint);
     line-height: 1.5;
-    margin-top: auto;
-    padding-top: 8px;
   }
   .footnote button{
     background: none;
@@ -327,6 +335,8 @@
 </style>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+</head>
+<body>
 
 <div class="wrap">
   <header class="masthead">
@@ -389,7 +399,7 @@
   </div>
 
   <p class="footnote">
-    Runs from any phone browser &mdash; no app install needed on this screen.<br>
+    Runs from any phone browser &mdash; add it to your home screen for the full app feel.<br>
     <button type="button" id="how-btn">How this works</button>
   </p>
 </div>
@@ -610,3 +620,5 @@
   })();
 })();
 </script>
+</body>
+</html>
