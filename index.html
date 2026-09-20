@@ -115,69 +115,49 @@
   .rides{
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 10px;
   }
 
-  .route{
+  .ride-btn{
     display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-  .stop{
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    column-gap: 14px;
-    align-items: start;
-    padding-block: 10px;
-  }
-  .stop .dot-col{
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    height: 100%;
+    gap: 14px;
+    width: 100%;
+    min-height: 72px;
+    padding: 12px 18px;
+    border-radius: 20px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.05s ease;
   }
-  .dot{
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 3px solid var(--accent);
-    background: var(--surface);
-    flex-shrink: 0;
-    margin-top: 4px;
+  .ride-btn:hover{ background: var(--accent-strong); }
+  .ride-btn:active{ transform: scale(0.98); }
+  .ride-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 3px; }
+  .ride-btn > svg{ width: 32px; height: 32px; flex-shrink: 0; }
+  .ride-text{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
-  .dot.filled{ background: var(--accent); }
-  .rail{
-    width: 2px;
-    flex: 1;
-    background: var(--border);
-    margin-block: 2px;
+  .ride-name{
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .stop-label{
-    font-size: 0.85rem;
-    color: var(--ink-faint);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin: 0 0 4px;
-  }
-  .stop-name{
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin: 0;
+  .ride-sub{
+    font-size: 0.9rem;
+    opacity: 0.85;
     line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-
-  .ride-tag{
-    display: inline-flex;
-    align-self: flex-start;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface-sunken);
-    border-radius: 999px;
-    padding: 8px 16px 8px 10px;
-    font-size: 0.95rem;
-    color: var(--ink-muted);
-  }
-  .ride-tag svg{ width: 20px; height: 20px; flex-shrink: 0; }
 
   .book-btn{
     display: flex;
@@ -341,32 +321,13 @@
 </div>
 
 <template id="ride-card-template">
-  <div class="card ride-card">
-    <div class="route">
-      <div class="stop">
-        <div class="dot-col"><div class="dot filled"></div><div class="rail"></div></div>
-        <div>
-          <p class="stop-label">Pickup</p>
-          <p class="stop-name js-source-label">Pickup</p>
-        </div>
-      </div>
-      <div class="stop">
-        <div class="dot-col"><div class="dot"></div></div>
-        <div>
-          <p class="stop-label">Drop-off</p>
-          <p class="stop-name js-target-label">Drop-off</p>
-        </div>
-      </div>
-    </div>
-    <span class="ride-tag">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
-      <span class="js-type-label">Auto</span>
+  <a class="ride-btn js-book-btn" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
+    <span class="ride-text">
+      <span class="ride-name js-ride-name">Ride</span>
+      <span class="ride-sub js-ride-sub"></span>
     </span>
-    <a class="book-btn js-book-btn" href="#">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
-      <span class="js-ride-name">Ride</span>
-    </a>
-  </div>
+  </a>
 </template>
 
 <script src="rides.js"></script>
@@ -420,12 +381,12 @@
 
     rides.forEach(function(ride){
       var node = el.template.content.firstElementChild.cloneNode(true);
-      node.querySelector(".js-source-label").textContent = ride.sourceLabel || "Pickup";
-      node.querySelector(".js-target-label").textContent = ride.targetLabel || "Drop-off";
-      node.querySelector(".js-type-label").textContent = Store.rideTypeMeta(ride.rideType).label + " · always this ride";
       node.querySelector(".js-ride-name").textContent = ride.name || "Book Ride";
+      node.querySelector(".js-ride-sub").textContent =
+        (ride.sourceLabel || "Pickup") + " \u2192 " + (ride.targetLabel || "Drop-off") +
+        " \u00b7 " + Store.rideTypeMeta(ride.rideType).label;
 
-      var bookBtn = node.querySelector(".js-book-btn");
+      var bookBtn = node; // the template root is the <a> itself
       bookBtn.href = Store.buildDeepLink(ride);
       bookBtn.addEventListener("click", function(){
         showStatus("Opening Uber for " + (ride.name || "your ride") + "…", true);
