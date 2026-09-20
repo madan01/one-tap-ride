@@ -8,6 +8,9 @@
   var LEGACY_TRIP_KEY = "one-tap-ride:trip";
   var HINT_KEY = "one-tap-ride:hint-dismissed";
   var RESOLVER_KEY = "one-tap-ride:resolver-url";
+  // Default short-link resolver (worker/worker.js). Not a secret: it only expands Google Maps links.
+  // A URL saved on the Manage rides page overrides it.
+  var DEFAULT_RESOLVER_URL = "https://one-tap-ride-resolver.madan-venugopal.workers.dev/";
 
   var RIDE_TYPES = [
     { id: "auto", label: "Auto" },
@@ -75,6 +78,10 @@
   }
 
   function loadResolverUrl() {
+    try { return localStorage.getItem(RESOLVER_KEY) || DEFAULT_RESOLVER_URL; } catch (e) { return DEFAULT_RESOLVER_URL; }
+  }
+
+  function loadResolverOverride() {
     try { return localStorage.getItem(RESOLVER_KEY) || ""; } catch (e) { return ""; }
   }
 
@@ -91,7 +98,7 @@
 
     var resolver = loadResolverUrl();
     if (!resolver) {
-      return Promise.reject(new Error("Short links need the resolver set up. Add your Short-link resolver URL under \"Short-link resolver\" on this page, or paste the full Google Maps link instead."));
+      return Promise.reject(new Error("No short-link resolver is configured. Paste the full Google Maps link instead."));
     }
     var sep = resolver.indexOf("?") === -1 ? "?" : "&";
     return fetch(resolver + sep + "url=" + encodeURIComponent(String(value).trim()))
@@ -205,6 +212,8 @@
     resolveLocation: resolveLocation,
     isShortMapsLink: isShortMapsLink,
     loadResolverUrl: loadResolverUrl,
+    loadResolverOverride: loadResolverOverride,
+    DEFAULT_RESOLVER_URL: DEFAULT_RESOLVER_URL,
     saveResolverUrl: saveResolverUrl,
     loadRides: loadRides,
     saveRides: saveRides,

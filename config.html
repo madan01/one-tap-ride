@@ -309,9 +309,9 @@
   <div class="card">
     <h2>Short-link resolver</h2>
     <div class="field">
-      <label for="in-resolver">Resolver URL (optional)</label>
-      <input id="in-resolver" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://one-tap-ride-resolver.yourname.workers.dev">
-      <p class="field-hint">Lets you paste short maps.app.goo.gl links when adding a ride. See worker/README.md to set one up. Stored on this device only.</p>
+      <label for="in-resolver">Resolver URL override (optional)</label>
+      <input id="in-resolver" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="">
+      <p class="field-hint">Short maps.app.goo.gl links are expanded by a built-in resolver. Only fill this in to use your own (see worker/README.md); leave empty to use the default. Stored on this device only.</p>
     </div>
     <div class="row-inline">
       <button type="button" class="primary-btn" id="save-resolver-btn">Save</button>
@@ -556,7 +556,8 @@
   }
 
   // Short-link resolver
-  el.resolver.value = Store.loadResolverUrl();
+  el.resolver.value = Store.loadResolverOverride();
+  el.resolver.placeholder = Store.DEFAULT_RESOLVER_URL;
   el.saveResolverBtn.addEventListener("click", function(){
     Store.saveResolverUrl(el.resolver.value);
     el.resolverSaveMsg.hidden = false;

@@ -15,8 +15,8 @@ npx wrangler deploy
 Wrangler prints a URL like `https://one-tap-ride-resolver.<your-subdomain>.workers.dev`.
 (Or paste `worker.js` into a new Worker in the Cloudflare dashboard.)
 
-Then open **Manage rides** in the app, paste that URL into **Short-link resolver**, and Save.
-The setting is stored in that browser only.
+The app ships with a default resolver URL (`DEFAULT_RESOLVER_URL` in `rides.js`). To use a different worker, paste its URL into **Short-link resolver** on **Manage rides** and Save.
+The override is stored in that browser only. The worker only answers browsers on the origins listed in `ALLOWED_ORIGINS` in `worker.js`; add yours there if you host the app elsewhere.
 
 ## Check it
 

@@ -22,16 +22,31 @@ const USER_AGENTS = [
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 ];
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
-};
+// Browsers may only call this from the app's own origins. Requests with no Origin header
+// (curl, address bar) are still served, so the worker stays easy to test.
+const ALLOWED_ORIGINS = [
+  "https://madan01.github.io",
+  "https://localhost",          // Android (Capacitor/TWA wrapper)
+  "capacitor://localhost"       // iOS wrapper
+];
+function originAllowed(origin) {
+  return ALLOWED_ORIGINS.indexOf(origin) !== -1 || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
 
-function json(body, status) {
+function corsHeaders(origin) {
+  const h = {
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin"
+  };
+  if (origin && originAllowed(origin)) h["Access-Control-Allow-Origin"] = origin;
+  return h;
+}
+
+function json(body, status, origin) {
   return new Response(JSON.stringify(body), {
     status: status || 200,
-    headers: Object.assign({ "Content-Type": "application/json" }, CORS)
+    headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders(origin))
   });
 }
 
@@ -132,26 +147,29 @@ async function resolve(startUrl, fetchImpl, debug) {
 
 export default {
   async fetch(request) {
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
-    if (request.method !== "GET") return json({ error: "GET only" }, 405);
+    const origin = request.headers.get("Origin");
+    if (origin && !originAllowed(origin)) return json({ error: "Origin not allowed" }, 403, origin);
+
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    if (request.method !== "GET") return json({ error: "GET only" }, 405, origin);
 
     const params = new URL(request.url).searchParams;
     const target = params.get("url");
     const debug = params.get("debug") === "1";
-    if (!target) return json({ error: "Missing ?url=" }, 400);
+    if (!target) return json({ error: "Missing ?url=" }, 400, origin);
 
     let parsed;
-    try { parsed = new URL(target); } catch (e) { return json({ error: "Invalid URL" }, 400); }
-    if (!allowed(parsed)) return json({ error: "Only Google Maps links are supported" }, 400);
+    try { parsed = new URL(target); } catch (e) { return json({ error: "Invalid URL" }, 400, origin); }
+    if (!allowed(parsed)) return json({ error: "Only Google Maps links are supported" }, 400, origin);
 
     try {
-      return json(await resolve(parsed.toString(), fetch, debug));
+      return json(await resolve(parsed.toString(), fetch, debug), 200, origin);
     } catch (e) {
       return json({
         error: String(e && e.message || e),
         url: debug ? e.url : undefined,
         tried: debug && e && e.tried ? e.tried : undefined
-      }, 502);
+      }, 502, origin);
     }
   }
 };
