@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manage Rides · One-Tap Ride</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#155E4D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="One-Tap Ride">
+<style>
+  :root{
+    color-scheme: light dark;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --surface-sunken: #ECE9E1;
+    --ink: #23302C;
+    --ink-muted: #6B7670;
+    --ink-faint: #97A099;
+    --accent: #155E4D;
+    --accent-strong: #0E4A3D;
+    --accent-contrast: #FFFFFF;
+    --border: #DDD8CB;
+    --danger: #B4432E;
+    --danger-strong: #8f2f1f;
+    --focus: #1B7A63;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #121714;
+      --surface: #1B211D;
+      --surface-sunken: #232B26;
+      --ink: #ECEEEA;
+      --ink-muted: #9BA69E;
+      --ink-faint: #6E7871;
+      --accent: #3FBF9B;
+      --accent-strong: #58D6B1;
+      --accent-contrast: #08211B;
+      --border: #2C3530;
+      --danger: #E28470;
+      --danger-strong: #f2a793;
+      --focus: #3FBF9B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #121714;
+    --surface: #1B211D;
+    --surface-sunken: #232B26;
+    --ink: #ECEEEA;
+    --ink-muted: #9BA69E;
+    --ink-faint: #6E7871;
+    --accent: #3FBF9B;
+    --accent-strong: #58D6B1;
+    --accent-contrast: #08211B;
+    --border: #2C3530;
+    --danger: #E28470;
+    --danger-strong: #f2a793;
+    --focus: #3FBF9B;
+  }
+
+  * { box-sizing: border-box; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-inline: 20px;
+    padding-block: 28px;
+  }
+
+  .wrap{
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .masthead{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .masthead h1{
+    font-size: 1.4rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .masthead a{
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+    text-decoration: none;
+    font-weight: 700;
+  }
+  .masthead a:hover{ text-decoration: underline; }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+  .card h2{
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .section-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .field{ display: flex; flex-direction: column; gap: 6px; }
+  .field label{ font-size: 0.85rem; color: var(--ink-muted); font-weight: 700; }
+  .field input, .field select{
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .field input:focus-visible, .field select:focus-visible{ outline: 2px solid var(--focus); outline-offset: 1px; }
+  .field-hint{ font-size: 0.8rem; color: var(--ink-faint); margin: 0; }
+
+  .row-inline{ display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+  .primary-btn{
+    align-self: flex-start;
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .primary-btn:hover{ background: var(--accent-strong); }
+
+  .save-msg{
+    margin: 0;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .rides-list{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ride-row{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    background: var(--surface-sunken);
+  }
+  .ride-row-main{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  .ride-row-main strong{
+    font-size: 1.05rem;
+  }
+  .type-badge{
+    align-self: flex-start;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 10px;
+  }
+  .ride-row-route{
+    font-size: 0.9rem;
+    color: var(--ink-muted);
+    overflow-wrap: anywhere;
+  }
+  .ride-row-actions{
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .icon-btn{
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .icon-btn:hover{ background: var(--bg); }
+  .icon-btn.danger{ color: var(--danger); border-color: var(--danger); }
+  .icon-btn.danger:hover{ color: var(--danger-strong); }
+  .icon-btn:disabled{ opacity: 0.35; cursor: not-allowed; }
+
+  .empty-msg{
+    margin: 0;
+    color: var(--ink-muted);
+    font-size: 0.95rem;
+  }
+
+  .footnote{
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    line-height: 1.5;
+  }
+  .footnote a{ color: var(--ink-muted); }
+
+  dialog{
+    border: none;
+    border-radius: 22px;
+    padding: 0;
+    background: var(--surface);
+    color: var(--ink);
+    width: min(440px, calc(100vw - 40px));
+    max-height: calc(100vh - 80px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  dialog::backdrop{ background: rgba(10,14,12,0.5); }
+  .dialog-inner{
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: calc(100vh - 128px);
+    overflow-y: auto;
+  }
+  .dialog-inner h2{ margin: 0; font-size: 1.3rem; }
+  .dialog-actions{ display: flex; gap: 12px; margin-top: 4px; }
+  .dialog-actions button{
+    flex: 1;
+    min-height: 52px;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .dialog-actions button.primary{
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-color: transparent;
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Manage Rides</h1>
+    <a href="index.html">&larr; Home</a>
+  </header>
+
+  <div class="card">
+    <h2>Family contact</h2>
+    <div class="field">
+      <label for="in-family-phone">Phone number (used by "Call Family" on the home screen)</label>
+      <input id="in-family-phone" type="tel" placeholder="+91 98xxxxxxx">
+    </div>
+    <div class="row-inline">
+      <button type="button" class="primary-btn" id="save-family-btn">Save</button>
+      <p class="save-msg" id="family-save-msg" hidden>Saved.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-head">
+      <h2>Rides</h2>
+      <button type="button" class="primary-btn" id="add-ride-btn">+ Add ride</button>
+    </div>
+    <div class="rides-list" id="rides-list"></div>
+    <p class="empty-msg" id="empty-msg" hidden>No rides yet &mdash; tap &ldquo;+ Add ride&rdquo; to create the first one.</p>
+  </div>
+
+  <p class="footnote">
+    Ride buttons appear on the home screen in this order.<br>
+    Ride type currently controls only the label shown here and on the home screen &mdash;
+    Uber's public deep link can't force a specific vehicle, so the rider may need to
+    tap Auto once inside the Uber app.
+  </p>
+</div>
+
+<template id="ride-row-template">
+  <div class="ride-row">
+    <div class="ride-row-main">
+      <span class="type-badge js-type-label">Auto</span>
+      <strong class="js-name">Ride name</strong>
+      <span class="ride-row-route">
+        <span class="js-source">Source</span> &rarr; <span class="js-target">Target</span>
+      </span>
+    </div>
+    <div class="ride-row-actions">
+      <button type="button" class="icon-btn js-up" title="Move up" aria-label="Move up">&uarr;</button>
+      <button type="button" class="icon-btn js-down" title="Move down" aria-label="Move down">&darr;</button>
+      <button type="button" class="icon-btn js-edit">Edit</button>
+      <button type="button" class="icon-btn danger js-delete">Delete</button>
+    </div>
+  </div>
+</template>
+
+<dialog id="ride-dialog">
+  <form class="dialog-inner" id="ride-form" method="dialog">
+    <h2 id="ride-dialog-title">Add ride</h2>
+    <div class="field">
+      <label for="in-ride-name">Ride name (shown on the button)</label>
+      <input id="in-ride-name" placeholder="e.g. Hospital" required>
+    </div>
+    <div class="field">
+      <label for="in-ride-type">Ride type</label>
+      <select id="in-ride-type"></select>
+    </div>
+    <div class="field">
+      <label for="in-source-label">Pickup name (optional)</label>
+      <input id="in-source-label" placeholder="e.g. Home">
+    </div>
+    <div class="field">
+      <label for="in-source-latlng">Pickup latitude, longitude</label>
+      <input id="in-source-latlng" placeholder="12.9784, 77.6408" required>
+      <p class="field-hint">Tip: open Google Maps, drop a pin, and copy the two numbers shown.</p>
+    </div>
+    <div class="field">
+      <label for="in-target-label">Drop-off name (optional)</label>
+      <input id="in-target-label" placeholder="e.g. Manipal Hospital">
+    </div>
+    <div class="field">
+      <label for="in-target-latlng">Drop-off latitude, longitude</label>
+      <input id="in-target-latlng" placeholder="12.9611, 77.6387" required>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="ride-cancel-btn">Cancel</button>
+      <button type="submit" class="primary">Save ride</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="rides.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var Store = window.OneTapRideStore;
+  var rides = Store.loadRides();
+  var editingIndex = -1;
+
+  var el = {
+    familyPhone: document.getElementById("in-family-phone"),
+    saveFamilyBtn: document.getElementById("save-family-btn"),
+    familySaveMsg: document.getElementById("family-save-msg"),
+    ridesList: document.getElementById("rides-list"),
+    emptyMsg: document.getElementById("empty-msg"),
+    addRideBtn: document.getElementById("add-ride-btn"),
+    rowTemplate: document.getElementById("ride-row-template"),
+    dialog: document.getElementById("ride-dialog"),
+    dialogTitle: document.getElementById("ride-dialog-title"),
+    form: document.getElementById("ride-form"),
+    cancelBtn: document.getElementById("ride-cancel-btn"),
+    inName: document.getElementById("in-ride-name"),
+    inType: document.getElementById("in-ride-type"),
+    inSourceLabel: document.getElementById("in-source-label"),
+    inSourceLatLng: document.getElementById("in-source-latlng"),
+    inTargetLabel: document.getElementById("in-target-label"),
+    inTargetLatLng: document.getElementById("in-target-latlng")
+  };
+
+  // Populate ride-type dropdown once.
+  Store.RIDE_TYPES.forEach(function(t){
+    var opt = document.createElement("option");
+    opt.value = t.id;
+    opt.textContent = t.label;
+    el.inType.appendChild(opt);
+  });
+
+  function renderRides(){
+    el.ridesList.innerHTML = "";
+    el.emptyMsg.hidden = rides.length > 0;
+
+    rides.forEach(function(ride, index){
+      var node = el.rowTemplate.content.firstElementChild.cloneNode(true);
+      node.querySelector(".js-type-label").textContent = Store.rideTypeMeta(ride.rideType).label;
+      node.querySelector(".js-name").textContent = ride.name || "(unnamed ride)";
+      node.querySelector(".js-source").textContent = ride.sourceLabel || (ride.sourceLat + ", " + ride.sourceLng);
+      node.querySelector(".js-target").textContent = ride.targetLabel || (ride.targetLat + ", " + ride.targetLng);
+
+      var upBtn = node.querySelector(".js-up");
+      var downBtn = node.querySelector(".js-down");
+      upBtn.disabled = index === 0;
+      downBtn.disabled = index === rides.length - 1;
+
+      upBtn.addEventListener("click", function(){ moveRide(index, -1); });
+      downBtn.addEventListener("click", function(){ moveRide(index, 1); });
+      node.querySelector(".js-edit").addEventListener("click", function(){ openDialog(index); });
+      node.querySelector(".js-delete").addEventListener("click", function(){ deleteRide(index); });
+
+      el.ridesList.appendChild(node);
+    });
+  }
+
+  function moveRide(index, delta){
+    var target = index + delta;
+    if(target < 0 || target >= rides.length) return;
+    var tmp = rides[index];
+    rides[index] = rides[target];
+    rides[target] = tmp;
+    Store.saveRides(rides);
+    renderRides();
+  }
+
+  function deleteRide(index){
+    var ride = rides[index];
+    if(!confirm('Delete "' + (ride.name || "this ride") + '"? This can\'t be undone.')) return;
+    rides.splice(index, 1);
+    Store.saveRides(rides);
+    renderRides();
+  }
+
+  function openDialog(index){
+    editingIndex = typeof index === "number" ? index : -1;
+    if(editingIndex >= 0){
+      var ride = rides[editingIndex];
+      el.dialogTitle.textContent = "Edit ride";
+      el.inName.value = ride.name || "";
+      el.inType.value = ride.rideType || "auto";
+      el.inSourceLabel.value = ride.sourceLabel || "";
+      el.inSourceLatLng.value = ride.sourceLat + ", " + ride.sourceLng;
+      el.inTargetLabel.value = ride.targetLabel || "";
+      el.inTargetLatLng.value = ride.targetLat + ", " + ride.targetLng;
+    } else {
+      el.dialogTitle.textContent = "Add ride";
+      el.form.reset();
+      el.inType.value = "auto";
+    }
+    if(typeof el.dialog.showModal === "function"){ el.dialog.showModal(); }
+  }
+
+  el.addRideBtn.addEventListener("click", function(){ openDialog(-1); });
+  el.cancelBtn.addEventListener("click", function(){ el.dialog.close(); });
+
+  el.form.addEventListener("submit", function(e){
+    e.preventDefault();
+
+    var source = Store.parseLatLng(el.inSourceLatLng.value);
+    var target = Store.parseLatLng(el.inTargetLatLng.value);
+    var name = el.inName.value.trim();
+
+    if(!name){ alert("Please give this ride a name."); return; }
+    if(!source){ alert("Pickup latitude/longitude looks invalid. Use the form \"12.9784, 77.6408\"."); return; }
+    if(!target){ alert("Drop-off latitude/longitude looks invalid. Use the form \"12.9611, 77.6387\"."); return; }
+
+    var ride = {
+      id: editingIndex >= 0 ? rides[editingIndex].id : Store.uid(),
+      name: name,
+      rideType: el.inType.value || "auto",
+      sourceLabel: el.inSourceLabel.value.trim(),
+      sourceLat: source.lat,
+      sourceLng: source.lng,
+      targetLabel: el.inTargetLabel.value.trim(),
+      targetLat: target.lat,
+      targetLng: target.lng
+    };
+
+    if(editingIndex >= 0){
+      rides[editingIndex] = ride;
+    } else {
+      rides.push(ride);
+    }
+    Store.saveRides(rides);
+    renderRides();
+    el.dialog.close();
+  });
+
+  // Family phone
+  el.familyPhone.value = Store.loadFamilyPhone();
+  el.saveFamilyBtn.addEventListener("click", function(){
+    Store.saveFamilyPhone(el.familyPhone.value.trim());
+    el.familySaveMsg.hidden = false;
+    setTimeout(function(){ el.familySaveMsg.hidden = true; }, 2000);
+  });
+
+  renderRides();
+})();
+</script>
+</body>
+</html>
