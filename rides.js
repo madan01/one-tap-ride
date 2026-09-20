@@ -7,6 +7,7 @@
   var FAMILY_PHONE_KEY = "one-tap-ride:family-phone";
   var LEGACY_TRIP_KEY = "one-tap-ride:trip";
   var HINT_KEY = "one-tap-ride:hint-dismissed";
+  var RESOLVER_KEY = "one-tap-ride:resolver-url";
 
   var RIDE_TYPES = [
     { id: "auto", label: "Auto" },
@@ -67,6 +68,44 @@
       }
     }
     return null;
+  }
+
+  function isShortMapsLink(value) {
+    return /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(String(value || "").trim());
+  }
+
+  function loadResolverUrl() {
+    try { return localStorage.getItem(RESOLVER_KEY) || ""; } catch (e) { return ""; }
+  }
+
+  function saveResolverUrl(url) {
+    try { localStorage.setItem(RESOLVER_KEY, (url || "").trim()); } catch (e) { /* ignore */ }
+  }
+
+  // Like parseLocation, but expands a short maps.app.goo.gl link through the user's
+  // resolver (worker/worker.js) first. Resolves to {lat,lng,name} or null; rejects with
+  // an Error carrying a user-readable message if the resolver is missing or fails.
+  function resolveLocation(value) {
+    var direct = parseLocation(value);
+    if (direct || !isShortMapsLink(value)) return Promise.resolve(direct);
+
+    var resolver = loadResolverUrl();
+    if (!resolver) {
+      return Promise.reject(new Error("Short links need the resolver set up. Add your Short-link resolver URL under \"Short-link resolver\" on this page, or paste the full Google Maps link instead."));
+    }
+    var sep = resolver.indexOf("?") === -1 ? "?" : "&";
+    return fetch(resolver + sep + "url=" + encodeURIComponent(String(value).trim()))
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.body || !res.body.url) {
+          throw new Error((res.body && res.body.error) || "The resolver couldn't expand that link.");
+        }
+        return parseLocation(res.body.url);
+      })
+      .catch(function (err) {
+        if (err instanceof TypeError) throw new Error("Couldn't reach the short-link resolver. Check your connection and the resolver URL.");
+        throw err;
+      });
   }
 
   function parseLatLng(value) {
@@ -161,6 +200,10 @@
     uid: uid,
     parseLatLng: parseLatLng,
     parseLocation: parseLocation,
+    resolveLocation: resolveLocation,
+    isShortMapsLink: isShortMapsLink,
+    loadResolverUrl: loadResolverUrl,
+    saveResolverUrl: saveResolverUrl,
     loadRides: loadRides,
     saveRides: saveRides,
     loadFamilyPhone: loadFamilyPhone,

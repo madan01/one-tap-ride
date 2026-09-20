@@ -307,6 +307,19 @@
   </div>
 
   <div class="card">
+    <h2>Short-link resolver</h2>
+    <div class="field">
+      <label for="in-resolver">Resolver URL (optional)</label>
+      <input id="in-resolver" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://one-tap-ride-resolver.yourname.workers.dev">
+      <p class="field-hint">Lets you paste short maps.app.goo.gl links when adding a ride. See worker/README.md to set one up. Stored on this device only.</p>
+    </div>
+    <div class="row-inline">
+      <button type="button" class="primary-btn" id="save-resolver-btn">Save</button>
+      <p class="save-msg" id="resolver-save-msg" hidden>Saved.</p>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="section-head">
       <h2>Rides</h2>
       <button type="button" class="primary-btn" id="add-ride-btn">+ Add ride</button>
@@ -389,6 +402,9 @@
     familyPhone: document.getElementById("in-family-phone"),
     saveFamilyBtn: document.getElementById("save-family-btn"),
     familySaveMsg: document.getElementById("family-save-msg"),
+    resolver: document.getElementById("in-resolver"),
+    saveResolverBtn: document.getElementById("save-resolver-btn"),
+    resolverSaveMsg: document.getElementById("resolver-save-msg"),
     ridesList: document.getElementById("rides-list"),
     emptyMsg: document.getElementById("empty-msg"),
     addRideBtn: document.getElementById("add-ride-btn"),
@@ -478,7 +494,7 @@
   function locationError(which, raw){
     raw = String(raw || "").trim();
     if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(raw)){
-      return "That " + which + " link is a short Google Maps link, which has no coordinates in it. Open it in your browser first, then copy the long address from the address bar (it starts with https://www.google.com/maps/…) and paste that.";
+      return "I expanded that " + which + " short link but found no coordinates in it. Open the place in Google Maps, drop a pin, and share that link instead, or paste \"lat, lng\" like 12.9784, 77.6408.";
     }
     if(/^https?:\/\//i.test(raw)){
       return "That " + which + " link has no coordinates I can read. Open the place in Google Maps, drop a pin on it, and paste that link, or paste \"lat, lng\" like 12.9784, 77.6408.\n\nWhat I received:\n" + raw.slice(0, 200);
@@ -492,14 +508,31 @@
   el.form.addEventListener("submit", function(e){
     e.preventDefault();
 
-    var source = Store.parseLocation(el.inSourceLatLng.value);
-    var target = Store.parseLocation(el.inTargetLatLng.value);
     var name = el.inName.value.trim();
-
     if(!name){ alert("Please give this ride a name."); return; }
-    if(!source){ alert(locationError("pickup", el.inSourceLatLng.value)); return; }
-    if(!target){ alert(locationError("drop-off", el.inTargetLatLng.value)); return; }
 
+    var saveBtn = el.form.querySelector('button[type="submit"]');
+    var needsResolve = Store.isShortMapsLink(el.inSourceLatLng.value) || Store.isShortMapsLink(el.inTargetLatLng.value);
+    if(needsResolve){ saveBtn.disabled = true; saveBtn.textContent = "Resolving link…"; }
+
+    function done(){ saveBtn.disabled = false; saveBtn.textContent = "Save ride"; }
+
+    Promise.all([
+      Store.resolveLocation(el.inSourceLatLng.value),
+      Store.resolveLocation(el.inTargetLatLng.value)
+    ]).then(function(pair){
+      done();
+      var source = pair[0], target = pair[1];
+      if(!source){ alert(locationError("pickup", el.inSourceLatLng.value)); return; }
+      if(!target){ alert(locationError("drop-off", el.inTargetLatLng.value)); return; }
+      saveRide(name, source, target);
+    }).catch(function(err){
+      done();
+      alert(err && err.message ? err.message : "Couldn't resolve that link.");
+    });
+  });
+
+  function saveRide(name, source, target){
     var ride = {
       id: editingIndex >= 0 ? rides[editingIndex].id : Store.uid(),
       name: name,
@@ -520,6 +553,14 @@
     Store.saveRides(rides);
     renderRides();
     el.dialog.close();
+  }
+
+  // Short-link resolver
+  el.resolver.value = Store.loadResolverUrl();
+  el.saveResolverBtn.addEventListener("click", function(){
+    Store.saveResolverUrl(el.resolver.value);
+    el.resolverSaveMsg.hidden = false;
+    setTimeout(function(){ el.resolverSaveMsg.hidden = true; }, 2000);
   });
 
   // Family phone
