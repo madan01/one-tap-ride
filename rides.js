@@ -50,7 +50,8 @@
     // Most exact first: the pinned place (!3d..!4d..), then explicit query params, then map centre (@lat,lng).
     var patterns = [
       new RegExp("!3d" + num + "!4d" + num),
-      new RegExp("[?&](?:q|ll|query|destination|daddr|saddr)=" + num + ",\\s*" + num),
+      new RegExp("[?&](?:q|ll|query|destination|daddr|saddr|center)=\\+?" + num + ",\\s*\\+?" + num),
+      new RegExp("/maps/(?:place|search|dir)/(?:[^/]*/)?\\+?" + num + ",\\s*\\+?" + num + "(?:[/?@]|$)"),
       new RegExp("@" + num + ",\\s*" + num)
     ];
     for (var i = 0; i < patterns.length; i++) {
@@ -60,6 +61,7 @@
         if (pt) {
           var nm = decoded.match(/\/maps\/place\/([^\/@?]+)/);
           var name = nm ? nm[1].replace(/\+/g, " ").split(",")[0].trim() : "";
+          if (/^[-+\d.\s]+$/.test(name)) name = "";
           return { lat: pt.lat, lng: pt.lng, name: name };
         }
       }
