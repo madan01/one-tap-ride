@@ -475,6 +475,17 @@
     if(typeof el.dialog.showModal === "function"){ el.dialog.showModal(); }
   }
 
+  function locationError(which, raw){
+    raw = String(raw || "").trim();
+    if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(raw)){
+      return "That " + which + " link is a short Google Maps link, which has no coordinates in it. Open it in your browser first, then copy the long address from the address bar (it starts with https://www.google.com/maps/…) and paste that.";
+    }
+    if(/^https?:\/\//i.test(raw)){
+      return "That " + which + " link has no coordinates I can read. Open the place in Google Maps, drop a pin on it, and paste that link, or paste \"lat, lng\" like 12.9784, 77.6408.\n\nWhat I received:\n" + raw.slice(0, 200);
+    }
+    return "Couldn't read the " + which + " location. Paste a full Google Maps link, or \"lat, lng\" like 12.9784, 77.6408.\n\nWhat I received:\n" + raw.slice(0, 200);
+  }
+
   el.addRideBtn.addEventListener("click", function(){ openDialog(-1); });
   el.cancelBtn.addEventListener("click", function(){ el.dialog.close(); });
 
@@ -486,8 +497,8 @@
     var name = el.inName.value.trim();
 
     if(!name){ alert("Please give this ride a name."); return; }
-    if(!source){ alert("Couldn't find coordinates in the pickup link. Paste the full Google Maps link (not a short maps.app.goo.gl one), or \"12.9784, 77.6408\"."); return; }
-    if(!target){ alert("Couldn't find coordinates in the drop-off link. Paste the full Google Maps link (not a short maps.app.goo.gl one), or \"12.9611, 77.6387\"."); return; }
+    if(!source){ alert(locationError("pickup", el.inSourceLatLng.value)); return; }
+    if(!target){ alert(locationError("drop-off", el.inTargetLatLng.value)); return; }
 
     var ride = {
       id: editingIndex >= 0 ? rides[editingIndex].id : Store.uid(),
