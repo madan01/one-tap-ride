@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One-Tap Ride</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#155E4D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="One-Tap Ride">
+<style>
+  :root{
+    color-scheme: light dark;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --surface-sunken: #ECE9E1;
+    --ink: #23302C;
+    --ink-muted: #6B7670;
+    --ink-faint: #97A099;
+    --accent: #155E4D;
+    --accent-strong: #0E4A3D;
+    --accent-contrast: #FFFFFF;
+    --border: #DDD8CB;
+    --danger: #B4432E;
+    --focus: #1B7A63;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #121714;
+      --surface: #1B211D;
+      --surface-sunken: #232B26;
+      --ink: #ECEEEA;
+      --ink-muted: #9BA69E;
+      --ink-faint: #6E7871;
+      --accent: #3FBF9B;
+      --accent-strong: #58D6B1;
+      --accent-contrast: #08211B;
+      --border: #2C3530;
+      --danger: #E28470;
+      --focus: #3FBF9B;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #121714;
+    --surface: #1B211D;
+    --surface-sunken: #232B26;
+    --ink: #ECEEEA;
+    --ink-muted: #9BA69E;
+    --ink-faint: #6E7871;
+    --accent: #3FBF9B;
+    --accent-strong: #58D6B1;
+    --accent-contrast: #08211B;
+    --border: #2C3530;
+    --danger: #E28470;
+    --focus: #3FBF9B;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Atkinson Hyperlegible", "Segoe UI", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-inline: 20px;
+    padding-block: 28px;
+  }
+
+  .wrap{
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    flex: 1;
+  }
+
+  .masthead{
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .masthead h1{
+    font-size: 1.5rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .masthead .clock{
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+    font-size: 1.05rem;
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+  }
+
+  .route{
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .stop{
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    column-gap: 14px;
+    align-items: start;
+    padding-block: 10px;
+  }
+  .stop .dot-col{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+  }
+  .dot{
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    background: var(--surface);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .dot.filled{ background: var(--accent); }
+  .rail{
+    width: 2px;
+    flex: 1;
+    background: var(--border);
+    margin-block: 2px;
+  }
+  .stop-label{
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 4px;
+  }
+  .stop-name{
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.3;
+  }
+  .stop-addr{
+    font-size: 0.98rem;
+    color: var(--ink-muted);
+    margin: 2px 0 0;
+    line-height: 1.35;
+  }
+
+  .ride-tag{
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface-sunken);
+    border-radius: 999px;
+    padding: 8px 16px 8px 10px;
+    font-size: 0.95rem;
+    color: var(--ink-muted);
+  }
+  .ride-tag svg{ width: 20px; height: 20px; flex-shrink: 0; }
+
+  .book-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 92px;
+    border: none;
+    border-radius: 22px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-family: inherit;
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.05s ease;
+  }
+  .book-btn:hover{ background: var(--accent-strong); }
+  .book-btn:active{ transform: scale(0.98); }
+  .book-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 3px; }
+  .book-btn svg{ width: 40px; height: 40px; flex-shrink: 0; }
+
+  .help-row{
+    display: flex;
+    gap: 14px;
+  }
+  .help-btn{
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 64px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .help-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 2px; }
+  .help-btn svg{ width: 26px; height: 26px; flex-shrink: 0; color: var(--ink-muted); }
+
+  .status{
+    min-height: 1.4em;
+    text-align: center;
+    font-size: 1.05rem;
+    color: var(--ink-muted);
+  }
+  .status.active{ color: var(--accent); font-weight: 700; }
+
+  .footnote{
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    line-height: 1.5;
+    margin-top: auto;
+    padding-top: 8px;
+  }
+  .footnote button{
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    font-family: inherit;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  dialog{
+    border: none;
+    border-radius: 22px;
+    padding: 0;
+    background: var(--surface);
+    color: var(--ink);
+    width: min(420px, calc(100vw - 40px));
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  dialog::backdrop{ background: rgba(10,14,12,0.5); }
+  .dialog-inner{
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .dialog-inner h2{ margin: 0; font-size: 1.3rem; }
+  .field{ display: flex; flex-direction: column; gap: 6px; }
+  .field label{ font-size: 0.85rem; color: var(--ink-muted); font-weight: 700; }
+  .field input{
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .field input:focus-visible{ outline: 2px solid var(--focus); outline-offset: 1px; }
+  .dialog-actions{ display: flex; gap: 12px; margin-top: 4px; }
+  .dialog-actions button{
+    flex: 1;
+    min-height: 52px;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .dialog-actions button.primary{
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-color: transparent;
+  }
+
+  .install-hint{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface-sunken);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 14px;
+    font-size: 0.92rem;
+    color: var(--ink-muted);
+    line-height: 1.4;
+  }
+  .install-hint button{
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--ink-faint);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  @media (max-width: 380px){
+    .book-btn{ font-size: 1.4rem; }
+    .book-btn svg{ width: 34px; height: 34px; }
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>One-Tap Ride</h1>
+    <span class="clock" id="clock">--:--</span>
+  </header>
+
+  <div class="install-hint" id="install-hint" hidden>
+    <span id="install-hint-text"></span>
+    <button type="button" id="install-hint-close" aria-label="Dismiss">&times;</button>
+  </div>
+
+  <div class="card">
+    <div class="route" id="route">
+      <div class="stop">
+        <div class="dot-col">
+          <div class="dot filled"></div>
+          <div class="rail"></div>
+        </div>
+        <div>
+          <p class="stop-label">Pickup</p>
+          <p class="stop-name" id="pickup-name">Home</p>
+          <p class="stop-addr" id="pickup-addr">80 Ft Road, Indiranagar, Bengaluru</p>
+        </div>
+      </div>
+      <div class="stop">
+        <div class="dot-col">
+          <div class="dot"></div>
+        </div>
+        <div>
+          <p class="stop-label">Drop-off</p>
+          <p class="stop-name" id="drop-name">Manipal Hospital</p>
+          <p class="stop-addr" id="drop-addr">Old Airport Road, HAL 2nd Stage</p>
+        </div>
+      </div>
+    </div>
+
+    <span class="ride-tag" id="ride-tag">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
+      <span id="ride-tag-text">Regular car, always this trip</span>
+    </span>
+
+    <a class="book-btn" id="book-btn" href="https://m.uber.com/ul/?action=setPickup">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
+      Book My Ride
+    </a>
+
+    <p class="status" id="status" role="status" aria-live="polite">Opens the Uber app, ready to confirm</p>
+
+    <div class="help-row">
+      <a class="help-btn" id="call-btn" href="tel:" role="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        Call Family
+      </a>
+      <button class="help-btn" id="edit-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        Change
+      </button>
+    </div>
+  </div>
+
+  <p class="footnote">
+    Runs from any phone browser &mdash; add it to your home screen for the full app feel.<br>
+    <button type="button" id="how-btn">How this works</button>
+  </p>
+</div>
+
+<dialog id="edit-dialog">
+  <form class="dialog-inner" method="dialog" id="edit-form">
+    <h2>Change trip details</h2>
+    <div class="field">
+      <label for="in-pickup-name">Pickup name</label>
+      <input id="in-pickup-name" required>
+    </div>
+    <div class="field">
+      <label for="in-pickup-addr">Pickup address (for display)</label>
+      <input id="in-pickup-addr" required>
+    </div>
+    <div class="field">
+      <label for="in-pickup-lat">Pickup latitude, longitude</label>
+      <input id="in-pickup-lat" placeholder="12.9784, 77.6408" required>
+    </div>
+    <div class="field">
+      <label for="in-drop-name">Drop-off name</label>
+      <input id="in-drop-name" required>
+    </div>
+    <div class="field">
+      <label for="in-drop-addr">Drop-off address (for display)</label>
+      <input id="in-drop-addr" required>
+    </div>
+    <div class="field">
+      <label for="in-drop-lat">Drop-off latitude, longitude</label>
+      <input id="in-drop-lat" placeholder="12.9611, 77.6387" required>
+    </div>
+    <div class="field">
+      <label for="in-phone">Family phone number (for Call Family)</label>
+      <input id="in-phone" placeholder="+91 98xxxxxxx" type="tel">
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="cancel-btn">Cancel</button>
+      <button type="submit" class="primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+
+  var DEFAULTS = {
+    pickupName: "Home",
+    pickupAddr: "80 Ft Road, Indiranagar, Bengaluru",
+    pickupLat: 12.9784,
+    pickupLng: 77.6408,
+    dropName: "Manipal Hospital",
+    dropAddr: "Old Airport Road, HAL 2nd Stage",
+    dropLat: 12.9611,
+    dropLng: 77.6387,
+    phone: ""
+  };
+
+  var STORAGE_KEY = "one-tap-ride:trip";
+
+  function loadTrip(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return Object.assign({}, DEFAULTS);
+      var parsed = JSON.parse(raw);
+      return Object.assign({}, DEFAULTS, parsed);
+    }catch(e){
+      return Object.assign({}, DEFAULTS);
+    }
+  }
+
+  function saveTrip(trip){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(trip)); }catch(e){ /* ignore */ }
+  }
+
+  var trip = loadTrip();
+
+  var el = {
+    pickupName: document.getElementById("pickup-name"),
+    pickupAddr: document.getElementById("pickup-addr"),
+    dropName: document.getElementById("drop-name"),
+    dropAddr: document.getElementById("drop-addr"),
+    bookBtn: document.getElementById("book-btn"),
+    status: document.getElementById("status"),
+    callBtn: document.getElementById("call-btn"),
+    editBtn: document.getElementById("edit-btn"),
+    howBtn: document.getElementById("how-btn"),
+    dialog: document.getElementById("edit-dialog"),
+    form: document.getElementById("edit-form"),
+    cancelBtn: document.getElementById("cancel-btn"),
+    clock: document.getElementById("clock"),
+    inPickupName: document.getElementById("in-pickup-name"),
+    inPickupAddr: document.getElementById("in-pickup-addr"),
+    inPickupLat: document.getElementById("in-pickup-lat"),
+    inDropName: document.getElementById("in-drop-name"),
+    inDropAddr: document.getElementById("in-drop-addr"),
+    inDropLat: document.getElementById("in-drop-lat"),
+    inPhone: document.getElementById("in-phone")
+  };
+
+  function buildDeepLink(){
+    var params = new URLSearchParams();
+    params.set("action", "setPickup");
+    params.set("pickup[latitude]", String(trip.pickupLat));
+    params.set("pickup[longitude]", String(trip.pickupLng));
+    params.set("pickup[nickname]", trip.pickupName);
+    params.set("dropoff[latitude]", String(trip.dropLat));
+    params.set("dropoff[longitude]", String(trip.dropLng));
+    params.set("dropoff[nickname]", trip.dropName);
+    return "https://m.uber.com/ul/?" + params.toString();
+  }
+
+  function render(){
+    el.pickupName.textContent = trip.pickupName;
+    el.pickupAddr.textContent = trip.pickupAddr;
+    el.dropName.textContent = trip.dropName;
+    el.dropAddr.textContent = trip.dropAddr;
+    el.callBtn.href = trip.phone ? ("tel:" + trip.phone.replace(/\s+/g, "")) : "tel:";
+    el.callBtn.style.opacity = trip.phone ? "1" : "0.55";
+    el.bookBtn.href = buildDeepLink();
+  }
+
+  function tickClock(){
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var ampm = h >= 12 ? "PM" : "AM";
+    var h12 = h % 12; if(h12 === 0) h12 = 12;
+    el.clock.textContent = h12 + ":" + (m < 10 ? "0" + m : m) + " " + ampm;
+  }
+  tickClock();
+  setInterval(tickClock, 15000);
+
+  el.bookBtn.addEventListener("click", function(){
+    el.status.textContent = "Opening Uber…";
+    el.status.classList.add("active");
+    setTimeout(function(){
+      el.status.textContent = "Opens the Uber app, ready to confirm";
+      el.status.classList.remove("active");
+    }, 4000);
+  });
+
+  el.editBtn.addEventListener("click", function(){
+    el.inPickupName.value = trip.pickupName;
+    el.inPickupAddr.value = trip.pickupAddr;
+    el.inPickupLat.value = trip.pickupLat + ", " + trip.pickupLng;
+    el.inDropName.value = trip.dropName;
+    el.inDropAddr.value = trip.dropAddr;
+    el.inDropLat.value = trip.dropLat + ", " + trip.dropLng;
+    el.inPhone.value = trip.phone;
+    if(typeof el.dialog.showModal === "function"){ el.dialog.showModal(); }
+  });
+
+  el.cancelBtn.addEventListener("click", function(){ el.dialog.close(); });
+
+  function parseLatLng(value, fallbackLat, fallbackLng){
+    var parts = String(value).split(",").map(function(s){ return parseFloat(s.trim()); });
+    if(parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])){
+      return { lat: parts[0], lng: parts[1] };
+    }
+    return { lat: fallbackLat, lng: fallbackLng };
+  }
+
+  el.form.addEventListener("submit", function(e){
+    e.preventDefault();
+    var pickupCoord = parseLatLng(el.inPickupLat.value, trip.pickupLat, trip.pickupLng);
+    var dropCoord = parseLatLng(el.inDropLat.value, trip.dropLat, trip.dropLng);
+    trip = {
+      pickupName: el.inPickupName.value.trim() || DEFAULTS.pickupName,
+      pickupAddr: el.inPickupAddr.value.trim() || DEFAULTS.pickupAddr,
+      pickupLat: pickupCoord.lat,
+      pickupLng: pickupCoord.lng,
+      dropName: el.inDropName.value.trim() || DEFAULTS.dropName,
+      dropAddr: el.inDropAddr.value.trim() || DEFAULTS.dropAddr,
+      dropLat: dropCoord.lat,
+      dropLng: dropCoord.lng,
+      phone: el.inPhone.value.trim()
+    };
+    saveTrip(trip);
+    render();
+    el.dialog.close();
+  });
+
+  el.howBtn.addEventListener("click", function(){
+    alert("This button opens the Uber app with your pickup and drop-off already filled in — you only need to tap Confirm inside Uber. Tap Change to update the addresses or the family phone number. Nothing here is stored anywhere except on this phone.");
+  });
+
+  render();
+
+  // Install-to-home-screen hint (per-device, dismissible, never nags again once closed)
+  (function(){
+    var HINT_KEY = "one-tap-ride:hint-dismissed";
+    var hint = document.getElementById("install-hint");
+    var hintText = document.getElementById("install-hint-text");
+    var closeBtn = document.getElementById("install-hint-close");
+
+    var isStandalone = false;
+    try{
+      isStandalone = window.navigator.standalone === true ||
+        (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+    }catch(e){ isStandalone = false; }
+
+    var dismissed = false;
+    try{ dismissed = localStorage.getItem(HINT_KEY) === "1"; }catch(e){ dismissed = false; }
+
+    if(!isStandalone && !dismissed){
+      var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      hintText.textContent = isIOS
+        ? "Tip: tap the Share icon below, then “Add to Home Screen”, so this opens like an app."
+        : "Tip: open the browser menu and choose “Add to Home screen”, so this opens like an app.";
+      hint.hidden = false;
+    }
+
+    closeBtn.addEventListener("click", function(){
+      hint.hidden = true;
+      try{ localStorage.setItem(HINT_KEY, "1"); }catch(e){ /* ignore */ }
+    });
+  })();
+})();
+</script>
+</body>
+</html>
