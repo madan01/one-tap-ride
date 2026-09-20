@@ -359,7 +359,7 @@
     <div class="field">
       <label for="in-source-latlng">Pickup location</label>
       <input id="in-source-latlng" placeholder="Paste a Google Maps link" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" required>
-      <p class="field-hint">In Google Maps, open the place, tap Share, copy the link (use the full https://www.google.com/maps/… link, not a short maps.app.goo.gl one) and paste it here. Plain "12.9784, 77.6408\" also works.</p>
+      <p class="field-hint">In Google Maps, open the place, tap Share, copy the link (use the full https://www.google.com/maps/… link, not a short maps.app.goo.gl one) and paste it here. Plain "12.9784, 77.6408" also works.</p>
     </div>
     <div class="field">
       <label for="in-target-label">Drop-off name (optional)</label>
@@ -486,7 +486,7 @@
     var name = el.inName.value.trim();
 
     if(!name){ alert("Please give this ride a name."); return; }
-    if(!source){ alert("Pickup latitude/longitude looks invalid. Use the form "12.9784, 77.6408\"."); return; }
+    if(!source){ alert("Couldn't find coordinates in the pickup link. Paste the full Google Maps link (not a short maps.app.goo.gl one), or \"12.9784, 77.6408\"."); return; }
     if(!target){ alert("Couldn't find coordinates in the drop-off link. Paste the full Google Maps link (not a short maps.app.goo.gl one), or \"12.9611, 77.6387\"."); return; }
 
     var ride = {
