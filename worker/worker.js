@@ -1,5 +1,7 @@
 /* One-Tap Ride — short-link resolver (Cloudflare Worker).
-   GET /?url=https://maps.app.goo.gl/xxxx  ->  { "url": "<final long Google Maps URL>" }
+   GET /?url=https://maps.app.goo.gl/xxxx
+     ->  { "url": "<long Google Maps URL>", "lat": 12.93, "lng": 77.52, "name": "Place" }
+   (lat/lng are null if the long URL has no coordinates.)
    Only Google Maps hosts are accepted, so this can't be used as a general open proxy. */
 
 const ALLOWED_HOSTS = [
@@ -73,15 +75,47 @@ function findMapsUrlInBody(body) {
   return m ? m[0] : null;
 }
 
+// Pull coordinates (and a place name when present) out of a full Google Maps URL.
+// Most exact first: the pinned place (!3d..!4d..), then explicit query params, then map centre (@lat,lng).
+function extractLocation(rawUrl) {
+  let text = rawUrl;
+  try { text = decodeURIComponent(rawUrl); } catch (e) { /* keep raw */ }
+  const num = "(-?\\d+(?:\\.\\d+)?)";
+  const patterns = [
+    new RegExp("!3d" + num + "!4d" + num),
+    new RegExp("[?&](?:q|ll|query|destination|daddr|saddr|center)=\\+?" + num + ",\\s*\\+?" + num),
+    new RegExp("/maps/(?:place|search|dir)/(?:[^/]*/)?\\+?" + num + ",\\s*\\+?" + num + "(?:[/?@]|$)"),
+    new RegExp("@" + num + ",\\s*" + num)
+  ];
+  for (const re of patterns) {
+    const m = text.match(re);
+    if (!m) continue;
+    const lat = parseFloat(m[1]), lng = parseFloat(m[2]);
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) continue;
+    const nm = text.match(/\/maps\/place\/([^\/@?]+)/);
+    let name = nm ? nm[1].replace(/\+/g, " ").split(",")[0].trim() : "";
+    if (/^[-+\d.\s]+$/.test(name)) name = "";
+    return { lat, lng, name };
+  }
+  return null;
+}
+
+function result(url, debug, tried) {
+  const loc = extractLocation(url);
+  const out = { url, lat: loc ? loc.lat : null, lng: loc ? loc.lng : null, name: loc ? loc.name : "" };
+  if (debug) out.tried = tried;
+  return out;
+}
+
 async function resolve(startUrl, fetchImpl, debug) {
   const tried = [];
   for (const ua of USER_AGENTS) {
     const r = await follow(startUrl, ua, fetchImpl);
     tried.push({ ua: ua.slice(0, 20), status: r.status, url: r.url });
-    if (r.url !== startUrl) return debug ? { url: r.url, tried } : { url: r.url };
+    if (r.url !== startUrl) return result(r.url, debug, tried);
 
     const fromBody = findMapsUrlInBody(r.body);
-    if (fromBody) return debug ? { url: fromBody, tried, via: "body" } : { url: fromBody };
+    if (fromBody) return result(fromBody, debug, tried);
     if (debug) tried[tried.length - 1].bodyHead = r.body.slice(0, 300);
   }
   // Nothing expanded: report that instead of echoing the short link back as if it worked.

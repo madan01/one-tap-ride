@@ -100,7 +100,12 @@
         if (!res.ok || !res.body || !res.body.url) {
           throw new Error((res.body && res.body.error) || "The resolver couldn't expand that link.");
         }
-        return parseLocation(res.body.url);
+        var b = res.body;
+        if (typeof b.lat === "number" && typeof b.lng === "number") {
+          var pt = validLatLng(b.lat, b.lng);
+          if (pt) return { lat: pt.lat, lng: pt.lng, name: b.name || "" };
+        }
+        return parseLocation(b.url);
       })
       .catch(function (err) {
         if (err instanceof TypeError) throw new Error("Couldn't reach the short-link resolver. Check your connection and the resolver URL.");

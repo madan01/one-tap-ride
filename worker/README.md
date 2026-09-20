@@ -22,5 +22,5 @@ The setting is stored in that browser only.
 
 ```
 curl "https://one-tap-ride-resolver.<your-subdomain>.workers.dev/?url=https://maps.app.goo.gl/XXXX"
-# -> {"url":"https://www.google.com/maps/place/.../@12.97,77.64,17z/..."}
+# -> {"url":"https://www.google.com/maps/place/...","lat":12.97,"lng":77.64,"name":"Place"}
 ```
