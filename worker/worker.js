@@ -30,7 +30,9 @@ const ALLOWED_ORIGINS = [
   "capacitor://localhost"       // iOS wrapper
 ];
 function originAllowed(origin) {
-  return ALLOWED_ORIGINS.indexOf(origin) !== -1 || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  if (ALLOWED_ORIGINS.indexOf(origin) !== -1) return true;
+  // Local dev server, also when opened from a phone on the same Wi-Fi (private LAN addresses).
+  return /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin);
 }
 
 function corsHeaders(origin) {
