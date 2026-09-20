@@ -97,15 +97,12 @@
     return fetch(resolver + sep + "url=" + encodeURIComponent(String(value).trim()))
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
       .then(function (res) {
-        if (!res.ok || !res.body || !res.body.url) {
-          throw new Error((res.body && res.body.error) || "The resolver couldn't expand that link.");
-        }
         var b = res.body;
-        if (typeof b.lat === "number" && typeof b.lng === "number") {
-          var pt = validLatLng(b.lat, b.lng);
-          if (pt) return { lat: pt.lat, lng: pt.lng, name: b.name || "" };
+        var pt = b && validLatLng(b.lat, b.lng);
+        if (!res.ok || !pt) {
+          throw new Error((b && b.error) || "The resolver couldn't find coordinates for that link.");
         }
-        return parseLocation(b.url);
+        return { lat: pt.lat, lng: pt.lng, name: b.name || "" };
       })
       .catch(function (err) {
         if (err instanceof TypeError) throw new Error("Couldn't reach the short-link resolver. Check your connection and the resolver URL.");

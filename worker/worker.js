@@ -1,7 +1,7 @@
 /* One-Tap Ride — short-link resolver (Cloudflare Worker).
    GET /?url=https://maps.app.goo.gl/xxxx
-     ->  { "url": "<long Google Maps URL>", "lat": 12.93, "lng": 77.52, "name": "Place" }
-   (lat/lng are null if the long URL has no coordinates.)
+     ->  { "lat": 12.93, "lng": 77.52, "name": "Place" }
+   Add &debug=1 to also see the expanded URL and what was tried.
    Only Google Maps hosts are accepted, so this can't be used as a general open proxy. */
 
 const ALLOWED_HOSTS = [
@@ -102,8 +102,14 @@ function extractLocation(rawUrl) {
 
 function result(url, debug, tried) {
   const loc = extractLocation(url);
-  const out = { url, lat: loc ? loc.lat : null, lng: loc ? loc.lng : null, name: loc ? loc.name : "" };
-  if (debug) out.tried = tried;
+  if (!loc) {
+    const err = new Error("The expanded link has no coordinates");
+    err.tried = tried;
+    err.url = url;
+    throw err;
+  }
+  const out = { lat: loc.lat, lng: loc.lng, name: loc.name };
+  if (debug) { out.url = url; out.tried = tried; }
   return out;
 }
 
@@ -141,7 +147,11 @@ export default {
     try {
       return json(await resolve(parsed.toString(), fetch, debug));
     } catch (e) {
-      return json({ error: String(e && e.message || e), tried: debug && e && e.tried ? e.tried : undefined }, 502);
+      return json({
+        error: String(e && e.message || e),
+        url: debug ? e.url : undefined,
+        tried: debug && e && e.tried ? e.tried : undefined
+      }, 502);
     }
   }
 };
