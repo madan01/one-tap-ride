@@ -307,19 +307,6 @@
   </div>
 
   <div class="card">
-    <h2>Short-link resolver</h2>
-    <div class="field">
-      <label for="in-resolver">Resolver URL override (optional)</label>
-      <input id="in-resolver" type="url" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="">
-      <p class="field-hint">Short maps.app.goo.gl links are expanded by a built-in resolver. Only fill this in to use your own (see worker/README.md); leave empty to use the default. Stored on this device only.</p>
-    </div>
-    <div class="row-inline">
-      <button type="button" class="primary-btn" id="save-resolver-btn">Save</button>
-      <p class="save-msg" id="resolver-save-msg" hidden>Saved.</p>
-    </div>
-  </div>
-
-  <div class="card">
     <div class="section-head">
       <h2>Rides</h2>
       <button type="button" class="primary-btn" id="add-ride-btn">+ Add ride</button>
@@ -402,9 +389,6 @@
     familyPhone: document.getElementById("in-family-phone"),
     saveFamilyBtn: document.getElementById("save-family-btn"),
     familySaveMsg: document.getElementById("family-save-msg"),
-    resolver: document.getElementById("in-resolver"),
-    saveResolverBtn: document.getElementById("save-resolver-btn"),
-    resolverSaveMsg: document.getElementById("resolver-save-msg"),
     ridesList: document.getElementById("rides-list"),
     emptyMsg: document.getElementById("empty-msg"),
     addRideBtn: document.getElementById("add-ride-btn"),
@@ -554,15 +538,6 @@
     renderRides();
     el.dialog.close();
   }
-
-  // Short-link resolver
-  el.resolver.value = Store.loadResolverOverride();
-  el.resolver.placeholder = Store.DEFAULT_RESOLVER_URL;
-  el.saveResolverBtn.addEventListener("click", function(){
-    Store.saveResolverUrl(el.resolver.value);
-    el.resolverSaveMsg.hidden = false;
-    setTimeout(function(){ el.resolverSaveMsg.hidden = true; }, 2000);
-  });
 
   // Family phone
   el.familyPhone.value = Store.loadFamilyPhone();

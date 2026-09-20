@@ -7,10 +7,8 @@
   var FAMILY_PHONE_KEY = "one-tap-ride:family-phone";
   var LEGACY_TRIP_KEY = "one-tap-ride:trip";
   var HINT_KEY = "one-tap-ride:hint-dismissed";
-  var RESOLVER_KEY = "one-tap-ride:resolver-url";
-  // Default short-link resolver (worker/worker.js). Not a secret: it only expands Google Maps links.
-  // A URL saved on the Manage rides page overrides it.
-  var DEFAULT_RESOLVER_URL = "https://one-tap-ride-resolver.madan-venugopal.workers.dev/";
+  // Short-link resolver (worker/worker.js). Not a secret: it only expands Google Maps links.
+  var RESOLVER_URL = "https://one-tap-ride-resolver.madan-venugopal.workers.dev/";
 
   var RIDE_TYPES = [
     { id: "auto", label: "Auto" },
@@ -77,29 +75,14 @@
     return /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(String(value || "").trim());
   }
 
-  function loadResolverUrl() {
-    try { return localStorage.getItem(RESOLVER_KEY) || DEFAULT_RESOLVER_URL; } catch (e) { return DEFAULT_RESOLVER_URL; }
-  }
-
-  function loadResolverOverride() {
-    try { return localStorage.getItem(RESOLVER_KEY) || ""; } catch (e) { return ""; }
-  }
-
-  function saveResolverUrl(url) {
-    try { localStorage.setItem(RESOLVER_KEY, (url || "").trim()); } catch (e) { /* ignore */ }
-  }
-
   // Like parseLocation, but expands a short maps.app.goo.gl link through the user's
   // resolver (worker/worker.js) first. Resolves to {lat,lng,name} or null; rejects with
-  // an Error carrying a user-readable message if the resolver is missing or fails.
+  // an Error carrying a user-readable message if the resolver fails.
   function resolveLocation(value) {
     var direct = parseLocation(value);
     if (direct || !isShortMapsLink(value)) return Promise.resolve(direct);
 
-    var resolver = loadResolverUrl();
-    if (!resolver) {
-      return Promise.reject(new Error("No short-link resolver is configured. Paste the full Google Maps link instead."));
-    }
+    var resolver = RESOLVER_URL;
     var sep = resolver.indexOf("?") === -1 ? "?" : "&";
     return fetch(resolver + sep + "url=" + encodeURIComponent(String(value).trim()))
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
@@ -211,10 +194,6 @@
     parseLocation: parseLocation,
     resolveLocation: resolveLocation,
     isShortMapsLink: isShortMapsLink,
-    loadResolverUrl: loadResolverUrl,
-    loadResolverOverride: loadResolverOverride,
-    DEFAULT_RESOLVER_URL: DEFAULT_RESOLVER_URL,
-    saveResolverUrl: saveResolverUrl,
     loadRides: loadRides,
     saveRides: saveRides,
     loadFamilyPhone: loadFamilyPhone,
