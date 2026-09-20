@@ -357,17 +357,17 @@
       <input id="in-source-label" placeholder="e.g. Home">
     </div>
     <div class="field">
-      <label for="in-source-latlng">Pickup latitude, longitude</label>
-      <input id="in-source-latlng" placeholder="12.9784, 77.6408" required>
-      <p class="field-hint">Tip: open Google Maps, drop a pin, and copy the two numbers shown.</p>
+      <label for="in-source-latlng">Pickup location</label>
+      <input id="in-source-latlng" placeholder="Paste a Google Maps link" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" required>
+      <p class="field-hint">In Google Maps, open the place, tap Share, copy the link (use the full https://www.google.com/maps/… link, not a short maps.app.goo.gl one) and paste it here. Plain "12.9784, 77.6408\" also works.</p>
     </div>
     <div class="field">
       <label for="in-target-label">Drop-off name (optional)</label>
       <input id="in-target-label" placeholder="e.g. Manipal Hospital">
     </div>
     <div class="field">
-      <label for="in-target-latlng">Drop-off latitude, longitude</label>
-      <input id="in-target-latlng" placeholder="12.9611, 77.6387" required>
+      <label for="in-target-latlng">Drop-off location</label>
+      <input id="in-target-latlng" placeholder="Paste a Google Maps link" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" required>
     </div>
     <div class="dialog-actions">
       <button type="button" id="ride-cancel-btn">Cancel</button>
@@ -481,22 +481,22 @@
   el.form.addEventListener("submit", function(e){
     e.preventDefault();
 
-    var source = Store.parseLatLng(el.inSourceLatLng.value);
-    var target = Store.parseLatLng(el.inTargetLatLng.value);
+    var source = Store.parseLocation(el.inSourceLatLng.value);
+    var target = Store.parseLocation(el.inTargetLatLng.value);
     var name = el.inName.value.trim();
 
     if(!name){ alert("Please give this ride a name."); return; }
-    if(!source){ alert("Pickup latitude/longitude looks invalid. Use the form \"12.9784, 77.6408\"."); return; }
-    if(!target){ alert("Drop-off latitude/longitude looks invalid. Use the form \"12.9611, 77.6387\"."); return; }
+    if(!source){ alert("Pickup latitude/longitude looks invalid. Use the form "12.9784, 77.6408\"."); return; }
+    if(!target){ alert("Couldn't find coordinates in the drop-off link. Paste the full Google Maps link (not a short maps.app.goo.gl one), or \"12.9611, 77.6387\"."); return; }
 
     var ride = {
       id: editingIndex >= 0 ? rides[editingIndex].id : Store.uid(),
       name: name,
       rideType: el.inType.value || "auto",
-      sourceLabel: el.inSourceLabel.value.trim(),
+      sourceLabel: el.inSourceLabel.value.trim() || source.name,
       sourceLat: source.lat,
       sourceLng: source.lng,
-      targetLabel: el.inTargetLabel.value.trim(),
+      targetLabel: el.inTargetLabel.value.trim() || target.name,
       targetLat: target.lat,
       targetLng: target.lng
     };
