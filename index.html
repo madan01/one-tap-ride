@@ -112,72 +112,52 @@
     box-shadow: 0 1px 0 rgba(0,0,0,0.02);
   }
 
-  .route{
+  .rides{
     display: flex;
     flex-direction: column;
-    gap: 0;
-  }
-  .stop{
-    display: grid;
-    grid-template-columns: 28px 1fr;
-    column-gap: 14px;
-    align-items: start;
-    padding-block: 10px;
-  }
-  .stop .dot-col{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100%;
-  }
-  .dot{
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 3px solid var(--accent);
-    background: var(--surface);
-    flex-shrink: 0;
-    margin-top: 4px;
-  }
-  .dot.filled{ background: var(--accent); }
-  .rail{
-    width: 2px;
-    flex: 1;
-    background: var(--border);
-    margin-block: 2px;
-  }
-  .stop-label{
-    font-size: 0.85rem;
-    color: var(--ink-faint);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin: 0 0 4px;
-  }
-  .stop-name{
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1.3;
-  }
-  .stop-addr{
-    font-size: 0.98rem;
-    color: var(--ink-muted);
-    margin: 2px 0 0;
-    line-height: 1.35;
+    gap: 10px;
   }
 
-  .ride-tag{
-    display: inline-flex;
-    align-self: flex-start;
+  .ride-btn{
+    display: flex;
     align-items: center;
-    gap: 8px;
-    background: var(--surface-sunken);
-    border-radius: 999px;
-    padding: 8px 16px 8px 10px;
-    font-size: 0.95rem;
-    color: var(--ink-muted);
+    gap: 14px;
+    width: 100%;
+    min-height: 72px;
+    padding: 12px 18px;
+    border-radius: 20px;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    text-decoration: none;
+    transition: background 0.15s ease, transform 0.05s ease;
   }
-  .ride-tag svg{ width: 20px; height: 20px; flex-shrink: 0; }
+  .ride-btn:hover{ background: var(--accent-strong); }
+  .ride-btn:active{ transform: scale(0.98); }
+  .ride-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 3px; }
+  .ride-btn > svg{ width: 32px; height: 32px; flex-shrink: 0; }
+  .ride-text{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .ride-name{
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ride-sub{
+    font-size: 0.9rem;
+    opacity: 0.85;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   .book-btn{
     display: flex;
@@ -202,6 +182,20 @@
   .book-btn:active{ transform: scale(0.98); }
   .book-btn:focus-visible{ outline: 3px solid var(--focus); outline-offset: 3px; }
   .book-btn svg{ width: 40px; height: 40px; flex-shrink: 0; }
+
+  .empty-card{
+    align-items: center;
+    text-align: center;
+  }
+  .empty-card p{
+    margin: 0;
+    color: var(--ink-muted);
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+  .empty-card .book-btn{
+    background: var(--accent);
+  }
 
   .help-row{
     display: flex;
@@ -241,7 +235,7 @@
     color: var(--ink-faint);
     line-height: 1.5;
   }
-  .footnote button{
+  .footnote button, .footnote a{
     background: none;
     border: none;
     color: var(--ink-muted);
@@ -250,54 +244,6 @@
     text-decoration: underline;
     cursor: pointer;
     padding: 4px;
-  }
-
-  dialog{
-    border: none;
-    border-radius: 22px;
-    padding: 0;
-    background: var(--surface);
-    color: var(--ink);
-    width: min(420px, calc(100vw - 40px));
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-  }
-  dialog::backdrop{ background: rgba(10,14,12,0.5); }
-  .dialog-inner{
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .dialog-inner h2{ margin: 0; font-size: 1.3rem; }
-  .field{ display: flex; flex-direction: column; gap: 6px; }
-  .field label{ font-size: 0.85rem; color: var(--ink-muted); font-weight: 700; }
-  .field input{
-    font-family: inherit;
-    font-size: 1rem;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--ink);
-  }
-  .field input:focus-visible{ outline: 2px solid var(--focus); outline-offset: 1px; }
-  .dialog-actions{ display: flex; gap: 12px; margin-top: 4px; }
-  .dialog-actions button{
-    flex: 1;
-    min-height: 52px;
-    border-radius: 14px;
-    font-family: inherit;
-    font-size: 1.05rem;
-    font-weight: 700;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--ink);
-  }
-  .dialog-actions button.primary{
-    background: var(--accent);
-    color: var(--accent-contrast);
-    border-color: transparent;
   }
 
   .install-hint{
@@ -347,178 +293,59 @@
     <button type="button" id="install-hint-close" aria-label="Dismiss">&times;</button>
   </div>
 
-  <div class="card">
-    <div class="route" id="route">
-      <div class="stop">
-        <div class="dot-col">
-          <div class="dot filled"></div>
-          <div class="rail"></div>
-        </div>
-        <div>
-          <p class="stop-label">Pickup</p>
-          <p class="stop-name" id="pickup-name">Home</p>
-          <p class="stop-addr" id="pickup-addr">80 Ft Road, Indiranagar, Bengaluru</p>
-        </div>
-      </div>
-      <div class="stop">
-        <div class="dot-col">
-          <div class="dot"></div>
-        </div>
-        <div>
-          <p class="stop-label">Drop-off</p>
-          <p class="stop-name" id="drop-name">Manipal Hospital</p>
-          <p class="stop-addr" id="drop-addr">Old Airport Road, HAL 2nd Stage</p>
-        </div>
-      </div>
-    </div>
+  <div class="rides" id="rides"></div>
 
-    <span class="ride-tag" id="ride-tag">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
-      <span id="ride-tag-text">Regular car, always this trip</span>
-    </span>
-
-    <a class="book-btn" id="book-btn" href="https://m.uber.com/ul/?action=setPickup">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
-      Book My Ride
+  <div class="card empty-card" id="empty-card" hidden>
+    <p>No rides have been set up yet.<br>Ask whoever manages this app to add one.</p>
+    <a class="book-btn" href="config.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      Add a ride
     </a>
-
-    <p class="status" id="status" role="status" aria-live="polite">Opens the Uber app, ready to confirm</p>
-
-    <div class="help-row">
-      <a class="help-btn" id="call-btn" href="tel:" role="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        Call Family
-      </a>
-      <button class="help-btn" id="edit-btn" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        Change
-      </button>
-    </div>
   </div>
+
+  <div class="help-row">
+    <a class="help-btn" id="call-btn" href="tel:" role="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      Call Family
+    </a>
+  </div>
+
+  <p class="status" id="status" role="status" aria-live="polite">&nbsp;</p>
 
   <p class="footnote">
     Runs from any phone browser &mdash; add it to your home screen for the full app feel.<br>
     <button type="button" id="how-btn">How this works</button>
+    &nbsp;&middot;&nbsp;
+    <a href="config.html">Manage rides</a>
   </p>
 </div>
 
-<dialog id="edit-dialog">
-  <form class="dialog-inner" method="dialog" id="edit-form">
-    <h2>Change trip details</h2>
-    <div class="field">
-      <label for="in-pickup-name">Pickup name</label>
-      <input id="in-pickup-name" required>
-    </div>
-    <div class="field">
-      <label for="in-pickup-addr">Pickup address (for display)</label>
-      <input id="in-pickup-addr" required>
-    </div>
-    <div class="field">
-      <label for="in-pickup-lat">Pickup latitude, longitude</label>
-      <input id="in-pickup-lat" placeholder="12.9784, 77.6408" required>
-    </div>
-    <div class="field">
-      <label for="in-drop-name">Drop-off name</label>
-      <input id="in-drop-name" required>
-    </div>
-    <div class="field">
-      <label for="in-drop-addr">Drop-off address (for display)</label>
-      <input id="in-drop-addr" required>
-    </div>
-    <div class="field">
-      <label for="in-drop-lat">Drop-off latitude, longitude</label>
-      <input id="in-drop-lat" placeholder="12.9611, 77.6387" required>
-    </div>
-    <div class="field">
-      <label for="in-phone">Family phone number (for Call Family)</label>
-      <input id="in-phone" placeholder="+91 98xxxxxxx" type="tel">
-    </div>
-    <div class="dialog-actions">
-      <button type="button" id="cancel-btn">Cancel</button>
-      <button type="submit" class="primary">Save</button>
-    </div>
-  </form>
-</dialog>
+<template id="ride-card-template">
+  <a class="ride-btn js-book-btn" href="#">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M5 17a2 2 0 1 0 0 .01M19 17a2 2 0 1 0 0 .01M5 17l1.2-6A2 2 0 0 1 8.14 9.5h7.72a2 2 0 0 1 1.94 1.5L19 17M6 12h12"/></svg>
+    <span class="ride-text">
+      <span class="ride-name js-ride-name">Ride</span>
+      <span class="ride-sub js-ride-sub"></span>
+    </span>
+  </a>
+</template>
 
+<script src="rides.js"></script>
 <script>
 (function(){
   "use strict";
 
-  var DEFAULTS = {
-    pickupName: "Home",
-    pickupAddr: "80 Ft Road, Indiranagar, Bengaluru",
-    pickupLat: 12.9784,
-    pickupLng: 77.6408,
-    dropName: "Manipal Hospital",
-    dropAddr: "Old Airport Road, HAL 2nd Stage",
-    dropLat: 12.9611,
-    dropLng: 77.6387,
-    phone: ""
-  };
-
-  var STORAGE_KEY = "one-tap-ride:trip";
-
-  function loadTrip(){
-    try{
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return Object.assign({}, DEFAULTS);
-      var parsed = JSON.parse(raw);
-      return Object.assign({}, DEFAULTS, parsed);
-    }catch(e){
-      return Object.assign({}, DEFAULTS);
-    }
-  }
-
-  function saveTrip(trip){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(trip)); }catch(e){ /* ignore */ }
-  }
-
-  var trip = loadTrip();
+  var Store = window.OneTapRideStore;
 
   var el = {
-    pickupName: document.getElementById("pickup-name"),
-    pickupAddr: document.getElementById("pickup-addr"),
-    dropName: document.getElementById("drop-name"),
-    dropAddr: document.getElementById("drop-addr"),
-    bookBtn: document.getElementById("book-btn"),
+    ridesWrap: document.getElementById("rides"),
+    emptyCard: document.getElementById("empty-card"),
     status: document.getElementById("status"),
     callBtn: document.getElementById("call-btn"),
-    editBtn: document.getElementById("edit-btn"),
     howBtn: document.getElementById("how-btn"),
-    dialog: document.getElementById("edit-dialog"),
-    form: document.getElementById("edit-form"),
-    cancelBtn: document.getElementById("cancel-btn"),
     clock: document.getElementById("clock"),
-    inPickupName: document.getElementById("in-pickup-name"),
-    inPickupAddr: document.getElementById("in-pickup-addr"),
-    inPickupLat: document.getElementById("in-pickup-lat"),
-    inDropName: document.getElementById("in-drop-name"),
-    inDropAddr: document.getElementById("in-drop-addr"),
-    inDropLat: document.getElementById("in-drop-lat"),
-    inPhone: document.getElementById("in-phone")
+    template: document.getElementById("ride-card-template")
   };
-
-  function buildDeepLink(){
-    var params = new URLSearchParams();
-    params.set("action", "setPickup");
-    params.set("pickup[latitude]", String(trip.pickupLat));
-    params.set("pickup[longitude]", String(trip.pickupLng));
-    params.set("pickup[nickname]", trip.pickupName);
-    params.set("dropoff[latitude]", String(trip.dropLat));
-    params.set("dropoff[longitude]", String(trip.dropLng));
-    params.set("dropoff[nickname]", trip.dropName);
-    return "https://m.uber.com/ul/?" + params.toString();
-  }
-
-  function render(){
-    el.pickupName.textContent = trip.pickupName;
-    el.pickupAddr.textContent = trip.pickupAddr;
-    el.dropName.textContent = trip.dropName;
-    el.dropAddr.textContent = trip.dropAddr;
-    el.callBtn.href = trip.phone ? ("tel:" + trip.phone.replace(/\s+/g, "")) : "tel:";
-    el.callBtn.style.opacity = trip.phone ? "1" : "0.55";
-    el.bookBtn.href = buildDeepLink();
-  }
 
   function tickClock(){
     var now = new Date();
@@ -531,65 +358,70 @@
   tickClock();
   setInterval(tickClock, 15000);
 
-  el.bookBtn.addEventListener("click", function(){
-    el.status.textContent = "Opening Uber…";
-    el.status.classList.add("active");
-    setTimeout(function(){
-      el.status.textContent = "Opens the Uber app, ready to confirm";
-      el.status.classList.remove("active");
-    }, 4000);
-  });
-
-  el.editBtn.addEventListener("click", function(){
-    el.inPickupName.value = trip.pickupName;
-    el.inPickupAddr.value = trip.pickupAddr;
-    el.inPickupLat.value = trip.pickupLat + ", " + trip.pickupLng;
-    el.inDropName.value = trip.dropName;
-    el.inDropAddr.value = trip.dropAddr;
-    el.inDropLat.value = trip.dropLat + ", " + trip.dropLng;
-    el.inPhone.value = trip.phone;
-    if(typeof el.dialog.showModal === "function"){ el.dialog.showModal(); }
-  });
-
-  el.cancelBtn.addEventListener("click", function(){ el.dialog.close(); });
-
-  function parseLatLng(value, fallbackLat, fallbackLng){
-    var parts = String(value).split(",").map(function(s){ return parseFloat(s.trim()); });
-    if(parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])){
-      return { lat: parts[0], lng: parts[1] };
+  function showStatus(text, active){
+    el.status.textContent = text;
+    el.status.classList.toggle("active", !!active);
+    if(active){
+      setTimeout(function(){
+        el.status.textContent = " ";
+        el.status.classList.remove("active");
+      }, 4000);
     }
-    return { lat: fallbackLat, lng: fallbackLng };
   }
 
-  el.form.addEventListener("submit", function(e){
-    e.preventDefault();
-    var pickupCoord = parseLatLng(el.inPickupLat.value, trip.pickupLat, trip.pickupLng);
-    var dropCoord = parseLatLng(el.inDropLat.value, trip.dropLat, trip.dropLng);
-    trip = {
-      pickupName: el.inPickupName.value.trim() || DEFAULTS.pickupName,
-      pickupAddr: el.inPickupAddr.value.trim() || DEFAULTS.pickupAddr,
-      pickupLat: pickupCoord.lat,
-      pickupLng: pickupCoord.lng,
-      dropName: el.inDropName.value.trim() || DEFAULTS.dropName,
-      dropAddr: el.inDropAddr.value.trim() || DEFAULTS.dropAddr,
-      dropLat: dropCoord.lat,
-      dropLng: dropCoord.lng,
-      phone: el.inPhone.value.trim()
-    };
-    saveTrip(trip);
-    render();
-    el.dialog.close();
-  });
+  function renderRides(){
+    var rides = Store.loadRides();
+    el.ridesWrap.innerHTML = "";
+
+    if(!rides.length){
+      el.emptyCard.hidden = false;
+      return;
+    }
+    el.emptyCard.hidden = true;
+
+    rides.forEach(function(ride){
+      var node = el.template.content.firstElementChild.cloneNode(true);
+      node.querySelector(".js-ride-name").textContent = ride.name || "Book Ride";
+      node.querySelector(".js-ride-sub").textContent =
+        (ride.sourceLabel || "Pickup") + " \u2192 " + (ride.targetLabel || "Drop-off") +
+        " \u00b7 " + Store.rideTypeMeta(ride.rideType).label;
+
+      var bookBtn = node; // the template root is the <a> itself
+      bookBtn.href = Store.buildDeepLink(ride);
+      bookBtn.addEventListener("click", function(){
+        showStatus("Opening Uber for " + (ride.name || "your ride") + "…", true);
+      });
+
+      el.ridesWrap.appendChild(node);
+    });
+  }
+
+  function renderFamily(){
+    var phone = Store.loadFamilyPhone();
+    el.callBtn.href = phone ? ("tel:" + phone.replace(/\s+/g, "")) : "tel:";
+    el.callBtn.style.opacity = phone ? "1" : "0.55";
+  }
 
   el.howBtn.addEventListener("click", function(){
-    alert("This button opens the Uber app with your pickup and drop-off already filled in — you only need to tap Confirm inside Uber. Tap Change to update the addresses or the family phone number. Nothing here is stored anywhere except on this phone.");
+    alert("Each button opens the Uber app with that ride's pickup and drop-off already filled in — you only need to tap Confirm inside Uber. Ask whoever manages this app to add, edit or reorder rides, or update the family phone number, from “Manage rides.” Nothing here is stored anywhere except on this phone.");
   });
 
-  render();
+  renderFamily();
+  renderRides();
+  showStatus(" ", false);
+
+  // Re-render if rides/family data changes in another tab (e.g. config page open alongside).
+  window.addEventListener("storage", function(e){
+    if(e.key === Store.RIDES_KEY) renderRides();
+    if(e.key === Store.FAMILY_PHONE_KEY) renderFamily();
+  });
+  // Also refresh whenever this tab becomes visible again (covers same-tab navigation back from config.html).
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState === "visible"){ renderRides(); renderFamily(); }
+  });
 
   // Install-to-home-screen hint (per-device, dismissible, never nags again once closed)
   (function(){
-    var HINT_KEY = "one-tap-ride:hint-dismissed";
     var hint = document.getElementById("install-hint");
     var hintText = document.getElementById("install-hint-text");
     var closeBtn = document.getElementById("install-hint-close");
@@ -601,7 +433,7 @@
     }catch(e){ isStandalone = false; }
 
     var dismissed = false;
-    try{ dismissed = localStorage.getItem(HINT_KEY) === "1"; }catch(e){ dismissed = false; }
+    try{ dismissed = localStorage.getItem(Store.HINT_KEY) === "1"; }catch(e){ dismissed = false; }
 
     if(!isStandalone && !dismissed){
       var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -613,7 +445,7 @@
 
     closeBtn.addEventListener("click", function(){
       hint.hidden = true;
-      try{ localStorage.setItem(HINT_KEY, "1"); }catch(e){ /* ignore */ }
+      try{ localStorage.setItem(Store.HINT_KEY, "1"); }catch(e){ /* ignore */ }
     });
   })();
 })();
