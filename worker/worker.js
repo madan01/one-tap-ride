@@ -75,6 +75,9 @@ async function follow(startUrl, ua, fetchImpl) {
     const loc = res.headers.get("Location");
     if (res.status >= 300 && res.status < 400 && loc) {
       current = new URL(loc, current);
+      if (current.searchParams.get("ftid") || extractLocation(current.toString())) {
+        return { url: current.toString(), status: res.status, body: "" };
+      }
       continue;
     }
     return { url: current.toString(), status: res.status, body: res.status === 200 ? await res.text() : "" };
@@ -117,38 +120,61 @@ function extractLocation(rawUrl) {
   return null;
 }
 
-// Links that only carry a place name (?q=Some+Place&ftid=0x..:0x..) have no coordinates in the URL.
-// The Maps page for them embeds a link to Google's own place-data response, which does: it lists the
-// exact pin as [null,null,LAT,LNG],"<ftid>". Fetch that and read the pin for this ftid.
-async function locationFromPlacePage(pageUrl, body, ua, fetchImpl) {
-  const m = body && body.match(/"(\/maps\/preview\/place\?[^"]+)"/);
-  if (!m) return null;
-  const path = m[1].replace(/&amp;/g, "&").replace(/\\u003d/g, "=").replace(/\\u0026/g, "&");
-  const res = await fetchImpl("https://www.google.com" + path, {
-    headers: { "User-Agent": ua, "Accept-Language": "en" }
-  });
+// Links that carry a place name but no coordinates (?q=Some+Place&ftid=0x..:0x..): Google's place-data
+// endpoint returns the exact pin for that ftid as [null,null,LAT,LNG],"<ftid>". One direct request,
+// no page and no redirect chain. Returns null if Google refuses (e.g. it throttles some IPs).
+async function locationFromFtid(url, ua, fetchImpl, tried) {
+  const u = new URL(url);
+  const ftid = u.searchParams.get("ftid");
+  if (!ftid || !/^0x[0-9a-f]+:0x[0-9a-f]+$/i.test(ftid)) return null;
+  const api = "https://www.google.com/maps/preview/place?authuser=0&hl=en&gl=in&pb=" + encodeURIComponent("!1m1!1s" + ftid);
+  const res = await fetchImpl(api, { headers: { "User-Agent": ua, "Accept-Language": "en" } });
+  if (tried) tried.push({ step: "place-data", status: res.status });
   if (!res.ok) return null;
   const text = await res.text();
-
-  const u = new URL(pageUrl);
-  const ftid = u.searchParams.get("ftid");
   const re = /\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\],"(0x[0-9a-f]+:0x[0-9a-f]+)"/g;
-  let hit = null, first = null, mm;
+  let mm;
   while ((mm = re.exec(text))) {
-    if (!first) first = mm;
-    if (ftid && mm[3] === ftid) { hit = mm; break; }
+    if (mm[3].toLowerCase() !== ftid.toLowerCase()) continue;   // only the exact place
+    const lat = parseFloat(mm[1]), lng = parseFloat(mm[2]);
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    return { lat, lng, name: placeNameFromQuery(u) };
   }
-  hit = hit || (ftid ? null : first);   // with an ftid, only accept that exact place
-  if (!hit) return null;
-  const lat = parseFloat(hit[1]), lng = parseFloat(hit[2]);
-  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
-  const q = u.searchParams.get("q") || "";
-  const name = /^[-+\d.,\s]*$/.test(q) ? "" : q.split(",")[0].trim();
-  return { lat, lng, name };
+  return null;
 }
 
-function output(loc, url, debug, tried) {
+function placeNameFromQuery(u) {
+  const q = u.searchParams.get("q") || "";
+  return /^[-+\d.,\s]*$/.test(q) ? "" : q.split(",")[0].trim();
+}
+
+// Last resort when Google won't give the pin: geocode the place text with OpenStreetMap (Nominatim).
+// Fine for well-known buildings, but can land on the neighbourhood, so callers must flag it approximate.
+async function geocodeByName(url, fetchImpl, tried) {
+  const u = new URL(url);
+  const q = u.searchParams.get("q") || "";
+  if (!q || /^[-+\d.,\s]*$/.test(q)) return null;
+  const parts = q.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+  const name = parts[0];
+  const variants = [q, name + ", " + parts.slice(-3, -1).join(", "), name].filter(function (v, i, a) { return v && a.indexOf(v) === i; });
+  for (const query of variants) {
+    const res = await fetchImpl("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=" + encodeURIComponent(query), {
+      headers: { "User-Agent": "one-tap-ride-resolver/1.0 (personal app)", "Accept-Language": "en" }
+    });
+    if (tried) tried.push({ step: "nominatim", query: query.slice(0, 60), status: res.status });
+    if (!res.ok) return null;
+    const hits = await res.json();
+    if (hits && hits[0]) {
+      const lat = parseFloat(hits[0].lat), lng = parseFloat(hits[0].lon);
+      if (!isNaN(lat) && !isNaN(lng)) return { lat, lng, name: placeNameFromQuery(u) };
+    }
+  }
+  return null;
+}
+
+function output(loc, url, debug, tried, approx) {
   const out = { lat: loc.lat, lng: loc.lng, name: loc.name };
+  if (approx) out.approx = true;
   if (debug) { out.url = url; out.tried = tried; }
   return out;
 }
@@ -161,19 +187,23 @@ async function resolve(startUrl, fetchImpl, debug) {
     tried.push({ ua: ua.slice(0, 20), status: r.status, url: r.url });
     lastUrl = r.url;
 
-    // 1. coordinates in the URL itself, 2. the place page's data (name-only links),
-    // 3. a Maps URL embedded in the page (interstitial pages).
+    // 1. coordinates in the URL, 2. exact pin from Google's place data (name-only links),
+    // 3. a Maps URL embedded in the page (interstitial), 4. approximate OpenStreetMap match.
     let loc = extractLocation(r.url);
     if (!loc) {
-      try { loc = await locationFromPlacePage(r.url, r.body, ua, fetchImpl); } catch (e) { loc = null; }
+      try { loc = await locationFromFtid(r.url, ua, fetchImpl, tried); } catch (e) { loc = null; }
     }
-    if (loc) return output(loc, r.url, debug, tried);
+    if (loc) return output(loc, r.url, debug, tried, false);
 
     const fromBody = findMapsUrlInBody(r.body);
     loc = fromBody && extractLocation(fromBody);
-    if (loc) return output(loc, fromBody, debug, tried);
+    if (loc) return output(loc, fromBody, debug, tried, false);
+
+    try { loc = await geocodeByName(r.url, fetchImpl, tried); } catch (e) { loc = null; }
+    if (loc) return output(loc, r.url, debug, tried, true);
 
     if (debug) tried[tried.length - 1].bodyHead = r.body.slice(0, 300);
+    if (r.url !== startUrl) break;   // the link did expand; other user-agents won't add coordinates
   }
   const err = new Error("Couldn't find coordinates for that Google Maps link");
   err.tried = tried;

@@ -93,7 +93,7 @@
         if (!res.ok || !pt) {
           throw new Error((b && b.error) || "The resolver couldn't find coordinates for that link.");
         }
-        return { lat: pt.lat, lng: pt.lng, name: b.name || "" };
+        return { lat: pt.lat, lng: pt.lng, name: b.name || "", approx: !!b.approx };
       })
       .catch(function (err) {
         if (err instanceof TypeError) throw new Error("Couldn't reach the short-link resolver. Check your connection and the resolver URL.");

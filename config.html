@@ -510,6 +510,15 @@
       var source = pair[0], target = pair[1];
       if(!source){ alert(locationError("pickup", el.inSourceLatLng.value)); return; }
       if(!target){ alert(locationError("drop-off", el.inTargetLatLng.value)); return; }
+      var fuzzy = [];
+      if(source.approx) fuzzy.push("pickup");
+      if(target.approx) fuzzy.push("drop-off");
+      if(fuzzy.length){
+        var lines = [source, target].filter(function(p){ return p.approx; }).map(function(p){
+          return "\u2022 " + (p.name || "Place") + ": " + p.lat.toFixed(5) + ", " + p.lng.toFixed(5);
+        }).join("\n");
+        if(!confirm("Couldn't read the exact pin for the " + fuzzy.join(" and ") + " link, so this is an approximate match that may be off by a few hundred metres:\n\n" + lines + "\n\nSave anyway? (Cancel, then paste \"lat, lng\" from Google Maps for an exact spot.)")) return;
+      }
       saveRide(name, source, target);
     }).catch(function(err){
       done();
