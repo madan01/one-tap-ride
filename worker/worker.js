@@ -117,14 +117,37 @@ function extractLocation(rawUrl) {
   return null;
 }
 
-function result(url, debug, tried) {
-  const loc = extractLocation(url);
-  if (!loc) {
-    const err = new Error("The expanded link has no coordinates");
-    err.tried = tried;
-    err.url = url;
-    throw err;
+// Links that only carry a place name (?q=Some+Place&ftid=0x..:0x..) have no coordinates in the URL.
+// The Maps page for them embeds a link to Google's own place-data response, which does: it lists the
+// exact pin as [null,null,LAT,LNG],"<ftid>". Fetch that and read the pin for this ftid.
+async function locationFromPlacePage(pageUrl, body, ua, fetchImpl) {
+  const m = body && body.match(/"(\/maps\/preview\/place\?[^"]+)"/);
+  if (!m) return null;
+  const path = m[1].replace(/&amp;/g, "&").replace(/\\u003d/g, "=").replace(/\\u0026/g, "&");
+  const res = await fetchImpl("https://www.google.com" + path, {
+    headers: { "User-Agent": ua, "Accept-Language": "en" }
+  });
+  if (!res.ok) return null;
+  const text = await res.text();
+
+  const u = new URL(pageUrl);
+  const ftid = u.searchParams.get("ftid");
+  const re = /\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\],"(0x[0-9a-f]+:0x[0-9a-f]+)"/g;
+  let hit = null, first = null, mm;
+  while ((mm = re.exec(text))) {
+    if (!first) first = mm;
+    if (ftid && mm[3] === ftid) { hit = mm; break; }
   }
+  hit = hit || (ftid ? null : first);   // with an ftid, only accept that exact place
+  if (!hit) return null;
+  const lat = parseFloat(hit[1]), lng = parseFloat(hit[2]);
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  const q = u.searchParams.get("q") || "";
+  const name = /^[-+\d.,\s]*$/.test(q) ? "" : q.split(",")[0].trim();
+  return { lat, lng, name };
+}
+
+function output(loc, url, debug, tried) {
   const out = { lat: loc.lat, lng: loc.lng, name: loc.name };
   if (debug) { out.url = url; out.tried = tried; }
   return out;
@@ -132,18 +155,29 @@ function result(url, debug, tried) {
 
 async function resolve(startUrl, fetchImpl, debug) {
   const tried = [];
+  let lastUrl = startUrl;
   for (const ua of USER_AGENTS) {
     const r = await follow(startUrl, ua, fetchImpl);
     tried.push({ ua: ua.slice(0, 20), status: r.status, url: r.url });
-    if (r.url !== startUrl) return result(r.url, debug, tried);
+    lastUrl = r.url;
+
+    // 1. coordinates in the URL itself, 2. the place page's data (name-only links),
+    // 3. a Maps URL embedded in the page (interstitial pages).
+    let loc = extractLocation(r.url);
+    if (!loc) {
+      try { loc = await locationFromPlacePage(r.url, r.body, ua, fetchImpl); } catch (e) { loc = null; }
+    }
+    if (loc) return output(loc, r.url, debug, tried);
 
     const fromBody = findMapsUrlInBody(r.body);
-    if (fromBody) return result(fromBody, debug, tried);
+    loc = fromBody && extractLocation(fromBody);
+    if (loc) return output(loc, fromBody, debug, tried);
+
     if (debug) tried[tried.length - 1].bodyHead = r.body.slice(0, 300);
   }
-  // Nothing expanded: report that instead of echoing the short link back as if it worked.
-  const err = new Error("Google didn't redirect this link to a map location");
+  const err = new Error("Couldn't find coordinates for that Google Maps link");
   err.tried = tried;
+  err.url = lastUrl;
   throw err;
 }
 

@@ -496,7 +496,8 @@
     if(!name){ alert("Please give this ride a name."); return; }
 
     var saveBtn = el.form.querySelector('button[type="submit"]');
-    var needsResolve = Store.isShortMapsLink(el.inSourceLatLng.value) || Store.isShortMapsLink(el.inTargetLatLng.value);
+    function pending(v){ return !Store.parseLocation(v) && Store.isMapsLink(v); }
+    var needsResolve = pending(el.inSourceLatLng.value) || pending(el.inTargetLatLng.value);
     if(needsResolve){ saveBtn.disabled = true; saveBtn.textContent = "Resolving link…"; }
 
     function done(){ saveBtn.disabled = false; saveBtn.textContent = "Save ride"; }

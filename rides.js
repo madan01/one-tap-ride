@@ -71,8 +71,9 @@
     return null;
   }
 
-  function isShortMapsLink(value) {
-    return /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(String(value || "").trim());
+  // Any Google Maps link (short or full). Ones with no coordinates in the text need the resolver.
+  function isMapsLink(value) {
+    return /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.|maps\.)?google\.[a-z.]+\/maps)/i.test(String(value || "").trim());
   }
 
   // Like parseLocation, but expands a short maps.app.goo.gl link through the user's
@@ -80,7 +81,7 @@
   // an Error carrying a user-readable message if the resolver fails.
   function resolveLocation(value) {
     var direct = parseLocation(value);
-    if (direct || !isShortMapsLink(value)) return Promise.resolve(direct);
+    if (direct || !isMapsLink(value)) return Promise.resolve(direct);
 
     var resolver = RESOLVER_URL;
     var sep = resolver.indexOf("?") === -1 ? "?" : "&";
@@ -193,7 +194,7 @@
     parseLatLng: parseLatLng,
     parseLocation: parseLocation,
     resolveLocation: resolveLocation,
-    isShortMapsLink: isShortMapsLink,
+    isMapsLink: isMapsLink,
     loadRides: loadRides,
     saveRides: saveRides,
     loadFamilyPhone: loadFamilyPhone,
